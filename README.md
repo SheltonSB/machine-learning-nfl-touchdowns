@@ -4,7 +4,7 @@ A machine learning project that predicts whether a quarterback (QB) will throw a
 
 ---
 
-## 📌 Project Objective
+## Project Objective
 
 > Predict whether an NFL quarterback will throw a **touchdown pass** in a game using past performance and game details.
 
@@ -12,7 +12,7 @@ This binary classification model uses **historical QB game logs**, **player care
 
 ---
 
-## 🚀 Features
+## Features
 
 - Game-by-game prediction: **TD or No TD**
 - Rolling average stats (past 3 games)
@@ -23,7 +23,7 @@ This binary classification model uses **historical QB game logs**, **player care
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 nfl-qb-td-predictor/
 ├── data/
@@ -39,7 +39,7 @@ nfl-qb-td-predictor/
 
 ---
 
-## 🧠 Machine Learning Stack
+## Machine Learning Stack
 
 | Task                     | Tools Used                             |
 |--------------------------|----------------------------------------|
@@ -52,7 +52,7 @@ nfl-qb-td-predictor/
 
 ---
 
-## 📊 Model Performance
+## Model Performance
 
 | Metric     | Value |
 |------------|-------|
@@ -64,28 +64,29 @@ nfl-qb-td-predictor/
 
 ---
 
-## 🧪 How to Run
+## How to Run
 
 ### 🔧 Install dependencies
 ```bash
 pip install -r requirements.txt
 🏃‍♂️ Launch the Streamlit app
 streamlit run app/app.py
-📈 Example Inputs (App)
+Example Inputs (App)
 
 QB: Patrick Mahomes
 Team: KC
 Opponent: DEN
 Past 3 Games: Avg 275 yards, 2 TDs
-Output: ✅ TD predicted
-📚 Data Source
+Output:  TD predicted
+Data Source
 
 NFL-Statistics-Scrape
 Files used:
 Game_Logs_Quarterback.csv
 Career_Stats_Passing.csv
 Basic_Stats.csv
-👨‍💻 Author
+
+Author
 
 Shelton Bumhe
 Data Scientist | Software Developer | NFL Fan
