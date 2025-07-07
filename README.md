@@ -96,10 +96,3 @@ Data Scientist | Software Developer | NFL Fan
 This project is open-source under the MIT License.
 
 
----
-
-Let me know if you'd like:
-- a `requirements.txt`
-- a professional Streamlit UI layout
-- GitHub Actions to auto-check code
-- or a visual logo/banner for the repo!
