@@ -7,7 +7,7 @@ import numpy as np
 # Load trained model
 model = joblib.load('../models/qb_td_model.pkl')
 
-st.title("🏈 NFL QB Touchdown Predictor")
+st.title(" NFL QB Touchdown Predictor")
 st.subheader("Will this quarterback throw a touchdown in the next game?")
 
 st.markdown("Fill out the quarterback's recent performance and bio details.")
