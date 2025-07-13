@@ -46,7 +46,7 @@ y_pred = model.predict(X_test)
 y_prob = model.predict_proba(X_test)[:, 1]
 
 # Evaluate
-print("🏈 Model Evaluation:")
+print("Model Evaluation:")
 print("Accuracy:", round(accuracy_score(y_test, y_pred), 3))
 print("F1 Score:", round(f1_score(y_test, y_pred), 3))
 print("ROC-AUC:", round(roc_auc_score(y_test, y_prob), 3))
