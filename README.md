@@ -290,10 +290,10 @@ This project is open-source under the MIT License.
 
 ---
 
-## 👨‍💻 Author
+## � Author
 
 **Shelton Bumhe**  
-*Data Scientist | Software Developer | NFL Fan*
+*Data Scientist | Software Engneer  | AI | NFL Fan*
 
 - 📬 [LinkedIn](https://linkedin.com/in/sheltonbumhe)
 - 🌐 [Portfolio](https://sheltonbumhe.com)
@@ -301,7 +301,7 @@ This project is open-source under the MIT License.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - NFL.com for providing the statistical data
 - Streamlit for the excellent web app framework
