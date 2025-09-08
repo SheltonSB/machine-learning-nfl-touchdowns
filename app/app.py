@@ -41,17 +41,56 @@ def load_model():
 
 model = load_model()
 
-def get_qb_list():
-    """Get list of QBs from database."""
+def get_latest_team(player_id: str) -> str:
+    """Return the most recent team for a player from game_logs."""
     try:
         db.connect()
-        qbs = pd.read_sql_query("""
-            SELECT DISTINCT bs.player_id, bs.name, bs.team
+        df = pd.read_sql_query(
+            """
+            SELECT gl.team
+            FROM game_logs gl
+            WHERE gl.player_id = ? AND gl.position = 'QB' AND gl.team IS NOT NULL
+            ORDER BY gl.year DESC, gl.week DESC
+            LIMIT 1
+            """,
+            db.conn,
+            params=(player_id,)
+        )
+        db.disconnect()
+        if not df.empty and isinstance(df.loc[0, 'team'], str) and df.loc[0, 'team'] != '':
+            return df.loc[0, 'team']
+        return 'Unknown'
+    except Exception:
+        return 'Unknown'
+
+def get_qb_list():
+    """Get list of QBs from database, including most recent team."""
+    try:
+        db.connect()
+        qbs = pd.read_sql_query(
+            """
+            SELECT DISTINCT bs.player_id, bs.name,
+                   COALESCE(latest.team, '') AS team
             FROM basic_stats bs
-            JOIN game_logs gl ON bs.player_id = gl.player_id
-            WHERE bs.position = 'QB' AND gl.position = 'QB'
+            LEFT JOIN (
+                SELECT gl.player_id, gl.team
+                FROM game_logs gl
+                JOIN (
+                    SELECT player_id, MAX(year * 100 + week) AS max_yw
+                    FROM game_logs
+                    WHERE position = 'QB'
+                    GROUP BY player_id
+                ) m
+                ON m.player_id = gl.player_id AND (gl.year * 100 + gl.week) = m.max_yw
+                WHERE gl.position = 'QB'
+            ) AS latest
+            ON latest.player_id = bs.player_id
+            JOIN game_logs gl_filter ON gl_filter.player_id = bs.player_id AND gl_filter.position = 'QB'
+            WHERE bs.position = 'QB'
             ORDER BY bs.name
-        """, db.conn)
+            """,
+            db.conn
+        )
         db.disconnect()
         return qbs
     except Exception as e:
@@ -84,11 +123,15 @@ def get_qb_basic_info(player_id):
     """Get basic info for a QB."""
     try:
         db.connect()
-        info = pd.read_sql_query("""
-            SELECT name, age, height, weight, experience, team
+        info = pd.read_sql_query(
+            """
+            SELECT name, age, height, weight, experience
             FROM basic_stats
             WHERE player_id = ?
-        """, db.conn, params=(player_id,))
+            """,
+            db.conn,
+            params=(player_id,)
+        )
         db.disconnect()
         return info.iloc[0] if len(info) > 0 else None
     except Exception as e:
@@ -164,7 +207,8 @@ def show_prediction_page():
         st.subheader("Select Quarterback")
         
         # Create a display name for selection
-        qbs['display_name'] = qbs['name'] + ' (' + qbs['team'].fillna('Unknown') + ')'
+        qbs['team'] = qbs['team'].fillna('Unknown')
+        qbs['display_name'] = qbs.apply(lambda r: f"{r['name']} ({r['team']})" if r['team'] else r['name'], axis=1)
         selected_qb_display = st.selectbox(
             "Choose a quarterback:",
             options=qbs['display_name'].tolist(),
@@ -178,9 +222,10 @@ def show_prediction_page():
         
         # Get QB basic info
         qb_info = get_qb_basic_info(player_id)
+        latest_team = get_latest_team(player_id)
         
         if qb_info is not None:
-            st.info(f"**Player Info:** {qb_info['name']}")
+            st.info(f"**Player Info:** {qb_info['name']} ({latest_team})")
             st.info(f"**Age:** {qb_info['age']} | **Experience:** {qb_info['experience']} years")
             st.info(f"**Height:** {qb_info['height']}\" | **Weight:** {qb_info['weight']} lbs")
     
@@ -347,12 +392,29 @@ def show_database_page():
     with tab1:
         try:
             db.connect()
-            sample_qbs = pd.read_sql_query("""
-                SELECT name, age, height, weight, experience, team
-                FROM basic_stats
-                WHERE position = 'QB'
+            sample_qbs = pd.read_sql_query(
+                """
+                SELECT bs.name, bs.age, bs.height, bs.weight, bs.experience,
+                       COALESCE(latest.team, '') AS team
+                FROM basic_stats bs
+                LEFT JOIN (
+                    SELECT gl.player_id, gl.team
+                    FROM game_logs gl
+                    JOIN (
+                        SELECT player_id, MAX(year * 100 + week) AS max_yw
+                        FROM game_logs
+                        WHERE position = 'QB'
+                        GROUP BY player_id
+                    ) m
+                    ON m.player_id = gl.player_id AND (gl.year * 100 + gl.week) = m.max_yw
+                    WHERE gl.position = 'QB'
+                ) AS latest
+                ON latest.player_id = bs.player_id
+                WHERE bs.position = 'QB'
                 LIMIT 10
-            """, db.conn)
+                """,
+                db.conn
+            )
             db.disconnect()
             
             st.dataframe(sample_qbs, use_container_width=True)
@@ -411,7 +473,9 @@ def show_history_page():
                 col1, col2, col3 = st.columns([2, 1, 1])
                 
                 with col1:
-                    st.write(f"**{pred['name']}** vs {pred['opponent']}")
+                    team = get_latest_team(str(pred['player_id'])) if 'player_id' in pred else 'Unknown'
+                    name_display = f"{pred['name']} ({team})" if isinstance(team, str) and team else pred['name']
+                    st.write(f"**{name_display}** vs {pred['opponent']}")
                     st.write(f"Date: {pred['game_date']}")
                 
                 with col2:
