@@ -343,7 +343,7 @@ def get_qb_basic_info(player_id):
         db.connect()
         info = pd.read_sql_query(
             """
-            SELECT name, age, height, weight, experience
+            SELECT name AS name, age, height, weight, experience
             FROM basic_stats
             WHERE player_id = ?
             """,
@@ -391,13 +391,11 @@ def main():
     st.sidebar.title("Navigation")
     page = st.sidebar.selectbox(
         "Choose a page",
-        ["Make Prediction", "Player Database", "Prediction History", "About"]
+        ["Make Prediction", "Prediction History", "About"]
     )
     
     if page == "Make Prediction":
         show_prediction_page()
-    elif page == "Player Database":
-        show_database_page()
     elif page == "Prediction History":
         show_history_page()
     elif page == "About":
@@ -750,10 +748,9 @@ def show_about_page():
     This application uses machine learning to predict whether an NFL quarterback will throw a touchdown in their next game.
     
     ### Features:
-    - **Database-driven**: All data is stored in a SQLite database for easy management
     - **Real-time predictions**: Make predictions using current player data
     - **Historical tracking**: View prediction history and accuracy
-    - **Player database**: Browse all available quarterback data
+    - **Player statistics**: View detailed quarterback performance data
     
     ### How it works:
     1. **Data Collection**: NFL game logs, career stats, and player information
