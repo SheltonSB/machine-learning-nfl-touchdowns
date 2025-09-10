@@ -273,7 +273,7 @@ def get_qb_list():
         db.connect()
         qbs = pd.read_sql_query(
             """
-            SELECT DISTINCT bs.player_id, bs.name,
+            SELECT DISTINCT bs.player_id, bs.name AS name,
                    COALESCE(latest.team, '') AS team
             FROM basic_stats bs
             LEFT JOIN (
@@ -296,6 +296,20 @@ def get_qb_list():
             db.conn
         )
         db.disconnect()
+        
+        # Debug: Check if we got the expected columns
+        if qbs.empty:
+            st.warning("No QB data found in database")
+            return pd.DataFrame()
+        
+        # Ensure we have the required columns
+        required_cols = ['player_id', 'name', 'team']
+        missing_cols = [col for col in required_cols if col not in qbs.columns]
+        if missing_cols:
+            st.error(f"Missing columns in QB data: {missing_cols}")
+            st.write("Available columns:", list(qbs.columns))
+            return pd.DataFrame()
+        
         return qbs
     except Exception as e:
         st.error(f"Error loading QB list: {e}")
@@ -402,6 +416,15 @@ def show_prediction_page():
     
     if qbs.empty:
         st.error("No QB data available. Please load data into the database first.")
+        return
+    
+    # Check if we have the required columns
+    required_cols = ['player_id', 'name', 'team']
+    missing_cols = [col for col in required_cols if col not in qbs.columns]
+    if missing_cols:
+        st.error(f"Missing required columns: {missing_cols}")
+        st.write("Available columns:", list(qbs.columns))
+        st.write("Sample data:", qbs.head() if not qbs.empty else "No data")
         return
     
     # Create QB selection
