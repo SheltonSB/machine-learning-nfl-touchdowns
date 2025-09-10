@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class NFLDataLoader:
     """Handles loading and transforming NFL data into the database."""
     
-    def __init__(self, raw_data_path: str = "../data/raw/", db: NFLDatabase = None):
+    def __init__(self, raw_data_path: str = "data/raw/", db: NFLDatabase = None):
         """
         Initialize the data loader.
         
@@ -58,9 +58,16 @@ class NFLDataLoader:
     
     def _clean_basic_stats(self, df: pd.DataFrame) -> pd.DataFrame:
         """Clean basic stats data."""
-        # Keep only essential columns
-        keep_cols = ['Player Id', 'Name', 'Age', 'Height', 'Weight', 'Experience', 'Position']
+        # Keep only essential columns (using actual column names from CSV)
+        keep_cols = ['Player Id', 'Name', 'Age', 'Height (inches)', 'Weight (lbs)', 'Experience', 'Position']
         df = df[keep_cols].copy()
+        
+        # Rename columns to match database schema
+        df = df.rename(columns={
+            'Player Id': 'player_id',
+            'Height (inches)': 'Height',
+            'Weight (lbs)': 'Weight'
+        })
         
         # Clean up data types
         df['Age'] = pd.to_numeric(df['Age'], errors='coerce')
@@ -73,7 +80,7 @@ class NFLDataLoader:
         # Clean up position
         df['Position'] = df['Position'].fillna('Unknown')
         
-        return df.dropna(subset=['Player Id'])
+        return df.dropna(subset=['player_id'])
     
     def load_game_logs(self):
         """Load and transform game logs data."""
@@ -106,16 +113,39 @@ class NFLDataLoader:
         # Clean the data
         df_clean = self._clean_game_logs(df)
         
-        # Split into general game logs and QB-specific stats
-        game_logs = df_clean[['Player Id', 'Name', 'Year', 'Week', 'Season', 'Team', 
-                             'Opponent', 'Position', 'Game Date', 'Home/Away', 'Result']].copy()
+        # Split into general game logs and QB-specific stats (using actual column names)
+        game_logs = df_clean[['Player Id', 'Name', 'Year', 'Week', 'Season', 
+                             'Opponent', 'Position', 'Game Date', 'Home or Away', 'Outcome']].copy() 
         
-        qb_stats = df_clean[['Passing Yards', 'TD Passes', 'Interceptions', 
+        # Add Team column (placeholder since it's not in the CSV)
+        game_logs['Team'] = 'Unknown'
+        
+        # Rename columns to match database schema
+        game_logs = game_logs.rename(columns={
+            'Player Id': 'player_id',
+            'Game Date': 'game_date',
+            'Home or Away': 'home_away',
+            'Outcome': 'result'
+        })
+        
+        qb_stats = df_clean[['Passing Yards', 'TD Passes', 'Ints', 
                             'Passes Attempted', 'Passes Completed', 'Completion Percentage',
-                            'Yards per Attempt', 'Passer Rating']].copy()
+                            'Passing Yards Per Attempt', 'Passer Rating']].copy()
+        
+        # Rename columns to match database schema
+        qb_stats = qb_stats.rename(columns={
+            'Passing Yards': 'passing_yards',
+            'TD Passes': 'td_passes',
+            'Ints': 'interceptions',
+            'Passes Attempted': 'passes_attempted',
+            'Passes Completed': 'passes_completed',
+            'Completion Percentage': 'completion_percentage',
+            'Passing Yards Per Attempt': 'yards_per_attempt',
+            'Passer Rating': 'passer_rating'
+        })
         
         # Add binary TD target
-        qb_stats['threw_td'] = (df_clean['TD Passes'] > 0).astype(int)
+        qb_stats['threw_td'] = (qb_stats['td_passes'] > 0).astype(int)
         
         # Save to database
         self.db.connect()
@@ -147,10 +177,21 @@ class NFLDataLoader:
         df = pd.read_csv(csv_path)
         df_clean = self._clean_game_logs(df)
         
-        # Keep only general columns
-        general_cols = ['Player Id', 'Name', 'Year', 'Week', 'Season', 'Team', 
-                       'Opponent', 'Position', 'Game Date', 'Home/Away', 'Result']
+        # Keep only general columns (using actual column names)
+        general_cols = ['Player Id', 'Name', 'Year', 'Week', 'Season', 
+                       'Opponent', 'Position', 'Game Date', 'Home or Away', 'Outcome']
         df_clean = df_clean[general_cols].copy()
+        
+        # Add Team column (placeholder since it's not in the CSV)
+        df_clean['Team'] = 'Unknown'
+        
+        # Rename columns to match database schema
+        df_clean = df_clean.rename(columns={
+            'Player Id': 'player_id',
+            'Game Date': 'game_date',
+            'Home or Away': 'home_away',
+            'Outcome': 'result'
+        })
         
         # Save to database
         self.db.connect()
@@ -209,12 +250,29 @@ class NFLDataLoader:
         
         # Split into general career stats and QB-specific stats
         career_stats = df_clean[['Player Id', 'Name', 'Year', 'Team', 'Position']].copy()
-        career_stats['games_played'] = 1  # Default value
+        career_stats['games_played'] = df_clean['Games Played'].fillna(1)  # Use actual games played
         career_stats['games_started'] = 1  # Default value
         
-        qb_career_passing = df_clean[['Passing Yards', 'TD Passes', 'Interceptions',
-                                    'Attempts', 'Completions', 'Completion Percentage',
-                                    'Yards per Attempt', 'Passer Rating']].copy()
+        # Rename columns to match database schema
+        career_stats = career_stats.rename(columns={
+            'Player Id': 'player_id'
+        })
+        
+        qb_career_passing = df_clean[['Passing Yards', 'TD Passes', 'Ints',
+                                    'Passes Attempted', 'Passes Completed', 'Completion Percentage',
+                                    'Passing Yards Per Attempt', 'Passer Rating']].copy()
+        
+        # Rename columns to match database schema
+        qb_career_passing = qb_career_passing.rename(columns={
+            'Passing Yards': 'passing_yards',
+            'TD Passes': 'td_passes',
+            'Ints': 'interceptions',
+            'Passes Attempted': 'attempts',
+            'Passes Completed': 'completions',
+            'Completion Percentage': 'completion_percentage',
+            'Passing Yards Per Attempt': 'yards_per_attempt',
+            'Passer Rating': 'passer_rating'
+        })
         
         # Save to database
         self.db.connect()
@@ -251,6 +309,11 @@ class NFLDataLoader:
         df_clean = df_clean[general_cols].copy()
         df_clean['games_played'] = 1  # Default value
         df_clean['games_started'] = 1  # Default value
+        
+        # Rename columns to match database schema
+        df_clean = df_clean.rename(columns={
+            'Player Id': 'player_id'
+        })
         
         # Save to database
         self.db.connect()
