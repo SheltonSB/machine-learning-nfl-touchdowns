@@ -361,25 +361,22 @@ def calculate_features(qb_info, recent_stats):
     if recent_stats.empty:
         return None
     
-    # Calculate rolling averages
+    # Calculate rolling averages (3-game rolling averages to match training data)
     avg_yards = recent_stats['passing_yards'].mean()
     avg_tds = recent_stats['td_passes'].mean()
     avg_attempts = recent_stats['passes_attempted'].mean()
-    avg_completion = recent_stats['completion_percentage'].mean()
-    avg_rating = recent_stats['passer_rating'].mean()
     
-    # Create feature vector
-    features = {
-        'age': qb_info['age'],
-        'height': qb_info['height'],
-        'weight': qb_info['weight'],
-        'experience': qb_info['experience'],
-        'passing_yards': avg_yards,
-        'td_passes': avg_tds,
-        'passes_attempted': avg_attempts,
-        'completion_percentage': avg_completion,
-        'passer_rating': avg_rating
-    }
+    # Create feature vector in the exact order the model expects (7 features)
+    # Order: Passing Yards_roll3, TD Passes_roll3, Passes Attempted_roll3, Age, Experience, Height, Weight
+    features = [
+        avg_yards,                    # Passing Yards_roll3
+        avg_tds,                      # TD Passes_roll3
+        avg_attempts,                 # Passes Attempted_roll3
+        qb_info.get('age', 0),        # Age
+        qb_info.get('experience', 0), # Experience
+        qb_info.get('height', 0),     # Height (inches)
+        qb_info.get('weight', 0)      # Weight (lbs)
+    ]
     
     return features
 
@@ -508,18 +505,8 @@ def show_prediction_page():
                 features = calculate_features(qb_info, recent_stats)
                 
                 if features:
-                    # Create feature vector for model
-                    feature_vector = np.array([[
-                        features['age'],
-                        features['height'],
-                        features['weight'],
-                        features['experience'],
-                        features['passing_yards'],
-                        features['td_passes'],
-                        features['passes_attempted'],
-                        features['completion_percentage'],
-                        features['passer_rating']
-                    ]])
+                    # Create feature vector for model (features is already a list in the correct order)
+                    feature_vector = np.array([features])
                     
                     # Make prediction
                     prediction = model.predict(feature_vector)[0]
