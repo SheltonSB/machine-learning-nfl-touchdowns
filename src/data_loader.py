@@ -9,8 +9,6 @@ Author: Shelton Bumhe
 
 import pandas as pd
 import numpy as np
-import os
-import sys
 from pathlib import Path
 import logging
 from database import NFLDatabase
@@ -202,22 +200,33 @@ class NFLDataLoader:
         logger.info(f"Loaded {len(df_clean)} general game log records")
     
     def _clean_game_logs(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Clean game logs data."""
-        # Remove preseason games
+        """Clean raw game log data.
+
+        Args:
+            df: Raw game log ``DataFrame`` loaded from CSV.
+
+        Returns:
+            ``DataFrame`` containing sanitized values ready for database insertion.
+        """
+
+        # Remove preseason games where statistics may be unreliable
         df = df[df['Season'] == 'Regular Season'].copy()
-        
-        # Replace '--' with NaN
+
+        # Replace placeholder values with NaN for consistent processing
         df = df.replace('--', np.nan)
-        
-        # Convert numeric columns
-        numeric_cols = ['Year', 'Week', 'Passing Yards', 'TD Passes', 'Interceptions',
-                       'Passes Attempted', 'Passes Completed', 'Completion Percentage',
-                       'Yards per Attempt', 'Passer Rating']
-        
+
+        # Convert numeric columns. The CSVs sometimes label interceptions as
+        # ``Ints`` rather than ``Interceptions``, so we account for that here.
+        numeric_cols = [
+            'Year', 'Week', 'Passing Yards', 'TD Passes', 'Ints',
+            'Passes Attempted', 'Passes Completed', 'Completion Percentage',
+            'Passing Yards Per Attempt', 'Passer Rating'
+        ]
+
         for col in numeric_cols:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
-        
+
         return df.dropna(subset=['Player Id', 'Name'])
     
     def load_career_stats(self):
@@ -372,9 +381,10 @@ class NFLDataLoader:
         logger.info("="*50)
 
 def main():
-    """Main function to run the data loader."""
+    """Run the full data loading workflow."""
     loader = NFLDataLoader()
     loader.load_all_data()
 
+
 if __name__ == "__main__":
-    main() 
+    main()

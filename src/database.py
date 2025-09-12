@@ -7,11 +7,12 @@ Uses SQLite for simplicity and beginner-friendliness.
 Author: Shelton Bumhe
 """
 
-import sqlite3
-import pandas as pd
-import os
-from typing import List, Dict, Optional
 import logging
+import os
+import sqlite3
+from typing import Dict
+
+import pandas as pd
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -324,5 +325,5 @@ class NFLDatabase:
         self.disconnect()
         return info
 
-# Global database instance
-db = NFLDatabase() 
+# Global database instance used by modules that need quick access.
+db = NFLDatabase()
