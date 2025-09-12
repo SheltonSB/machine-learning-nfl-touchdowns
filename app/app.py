@@ -343,7 +343,7 @@ def get_qb_basic_info(player_id):
         db.connect()
         info = pd.read_sql_query(
             """
-            SELECT name AS name, age, height, weight, experience
+            SELECT name AS name, age AS age, height AS height, weight AS weight, experience AS experience
             FROM basic_stats
             WHERE player_id = ?
             """,
@@ -450,9 +450,16 @@ def show_prediction_page():
         latest_team = get_latest_team(player_id)
         
         if qb_info is not None:
-            st.info(f"**Player Info:** {qb_info['name']} ({latest_team})")
-            st.info(f"**Age:** {qb_info['age']} | **Experience:** {qb_info['experience']} years")
-            st.info(f"**Height:** {qb_info['height']}\" | **Weight:** {qb_info['weight']} lbs")
+            # Safely get values with fallbacks
+            name = qb_info.get('name', 'Unknown')
+            age = qb_info.get('age', 'N/A')
+            experience = qb_info.get('experience', 'N/A')
+            height = qb_info.get('height', 'N/A')
+            weight = qb_info.get('weight', 'N/A')
+            
+            st.info(f"**Player Info:** {name} ({latest_team})")
+            st.info(f"**Age:** {age} | **Experience:** {experience} years")
+            st.info(f"**Height:** {height}\" | **Weight:** {weight} lbs")
     
     with col2:
         st.subheader("Game Context")
