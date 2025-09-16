@@ -388,11 +388,13 @@ def main():
     st.sidebar.title("Navigation")
     page = st.sidebar.selectbox(
         "Choose a page",
-        ["Make Prediction", "Prediction History", "About"]
+        ["Make Prediction", "Add Player", "Prediction History", "About"]
     )
     
     if page == "Make Prediction":
         show_prediction_page()
+    elif page == "Add Player":
+        show_add_player_page()
     elif page == "Prediction History":
         show_history_page()
     elif page == "About":
@@ -427,24 +429,72 @@ def show_prediction_page():
     
     with col1:
         st.subheader("Select Quarterback")
+        mode = st.radio("Input mode", ["Existing player", "Manual entry"], horizontal=True)
         
-        # Create a display name for selection
-        qbs['team'] = qbs['team'].fillna('Unknown')
-        qbs['display_name'] = qbs.apply(lambda r: f"{r['name']} ({r['team']})" if r['team'] else r['name'], axis=1)
-        selected_qb_display = st.selectbox(
-            "Choose a quarterback:",
-            options=qbs['display_name'].tolist(),
-            index=0
-        )
-        
-        # Get selected QB info
-        selected_qb_name = selected_qb_display.split(' (')[0]
-        selected_qb = qbs[qbs['name'] == selected_qb_name].iloc[0]
-        player_id = selected_qb['player_id']
-        
-        # Get QB basic info
-        qb_info = get_qb_basic_info(player_id)
-        latest_team = get_latest_team(player_id)
+        if mode == "Existing player":
+            # Create a display name for selection
+            qbs['team'] = qbs['team'].fillna('Unknown')
+            qbs['display_name'] = qbs.apply(lambda r: f"{r['name']} ({r['team']})" if r['team'] else r['name'], axis=1)
+            selected_qb_display = st.selectbox(
+                "Choose a quarterback:",
+                options=qbs['display_name'].tolist(),
+                index=0
+            )
+            
+            # Get selected QB info
+            selected_qb_name = selected_qb_display.split(' (')[0]
+            selected_qb = qbs[qbs['name'] == selected_qb_name].iloc[0]
+            player_id = selected_qb['player_id']
+            
+            # Get QB basic info
+            qb_info = get_qb_basic_info(player_id)
+            latest_team = get_latest_team(player_id)
+            manual_inputs = None
+        else:
+            # Manual entry
+            player_id = st.text_input("Player ID (e.g., johndoe/123456)")
+            manual_name = st.text_input("Name (Last, First)")
+            mc1, mc2, mc3, mc4 = st.columns(4)
+            with mc1:
+                age_in = st.number_input("Age", min_value=0.0, step=1.0, format="%f")
+            with mc2:
+                exp_in = st.number_input("Experience", min_value=0.0, step=1.0, format="%f")
+            with mc3:
+                ht_in = st.number_input("Height (inches)", min_value=0.0, step=1.0, format="%f")
+            with mc4:
+                wt_in = st.number_input("Weight (lbs)", min_value=0.0, step=1.0, format="%f")
+            st.markdown("Recent performance (averages)")
+            rc1, rc2, rc3 = st.columns(3)
+            with rc1:
+                avg_yards_in = st.number_input("Passing yards (avg)", min_value=0.0, step=1.0, format="%f")
+            with rc2:
+                avg_tds_in = st.number_input("TD passes (avg)", min_value=0.0, step=0.1, format="%f")
+            with rc3:
+                avg_att_in = st.number_input("Pass attempts (avg)", min_value=0.0, step=1.0, format="%f")
+            
+            st.markdown("Additional stats (optional)")
+            rc4, rc5 = st.columns(2)
+            with rc4:
+                comp_pct_in = st.number_input("Completion % (optional)", min_value=0.0, max_value=100.0, step=0.1, format="%f", value=65.0)
+            with rc5:
+                rating_in = st.number_input("Passer rating (optional)", min_value=0.0, step=1.0, format="%f", value=85.0)
+            
+            qb_info = {
+                'name': manual_name,
+                'age': age_in,
+                'experience': exp_in,
+                'height': ht_in,
+                'weight': wt_in
+            }
+            latest_team = 'Unknown'
+            # Build a small DataFrame to reuse calculate_features (3 identical rows)
+            manual_inputs = pd.DataFrame([{
+                'passing_yards': avg_yards_in,
+                'td_passes': avg_tds_in,
+                'passes_attempted': avg_att_in,
+                'completion_percentage': comp_pct_in,
+                'passer_rating': rating_in
+            }] * 3)
         
         if qb_info is not None:
             # Safely get values with fallbacks
@@ -469,34 +519,47 @@ def show_prediction_page():
         
         # Number of recent games to consider
         num_games = st.slider("Number of recent games to analyze:", 1, 10, 3)
+        
+        # Decision threshold for classification
+        threshold = st.slider("Decision threshold (TD if probability ≥ threshold)", 0.1, 0.9, 0.5, 0.01)
     
     # Get recent stats
-    recent_stats = get_qb_recent_stats(player_id, num_games)
+    if 'mode' in locals() and mode == "Manual entry" and manual_inputs is not None:
+        recent_stats = manual_inputs.copy()
+    else:
+        recent_stats = get_qb_recent_stats(player_id, num_games)
     
     if not recent_stats.empty:
         st.subheader("📊 Recent Performance")
         
-        # Display recent games
+        # Display recent games (only for existing players with game data)
         col1, col2 = st.columns(2)
         
         with col1:
-            st.write("**Recent Games:**")
-            for _, game in recent_stats.iterrows():
-                st.write(f"**{game['year']} Week {game['week']}** vs {game['opponent']}")
-                st.write(f"  {game['passing_yards']} yards, {game['td_passes']} TDs, {game['interceptions']} INTs")
+            if 'year' in recent_stats.columns and 'week' in recent_stats.columns and 'opponent' in recent_stats.columns:
+                st.write("**Recent Games:**")
+                for _, game in recent_stats.iterrows():
+                    st.write(f"**{game['year']} Week {game['week']}** vs {game['opponent']}")
+                    st.write(f"  {game['passing_yards']} yards, {game['td_passes']} TDs, {game['interceptions']} INTs")
+            else:
+                st.write("**Manual Entry Data:**")
+                st.write("Using provided averages for prediction")
         
         with col2:
             # Calculate averages
             avg_yards = recent_stats['passing_yards'].mean()
             avg_tds = recent_stats['td_passes'].mean()
             avg_attempts = recent_stats['passes_attempted'].mean()
-            avg_completion = recent_stats['completion_percentage'].mean()
+            avg_completion = recent_stats['completion_percentage'].mean() if 'completion_percentage' in recent_stats.columns else None
             
-            st.write("**3-Game Averages:**")
+            st.write("**Performance Averages:**")
             st.write(f"Passing Yards: {avg_yards:.1f}")
             st.write(f"TD Passes: {avg_tds:.1f}")
             st.write(f"Pass Attempts: {avg_attempts:.1f}")
-            st.write(f"Completion %: {avg_completion:.1f}%")
+            if avg_completion is not None and avg_completion == avg_completion:  # Check for NaN
+                st.write(f"Completion %: {avg_completion:.1f}%")
+            else:
+                st.write("Completion %: N/A")
         
         # Make prediction
         if st.button("🚀 Predict Touchdown", type="primary"):
@@ -509,29 +572,45 @@ def show_prediction_page():
                     feature_vector = np.array([features])
                     
                     # Make prediction
-                    prediction = model.predict(feature_vector)[0]
                     probability = model.predict_proba(feature_vector)[0][1]
+                    prediction = 1 if probability >= threshold else 0
                     
                     # Display results
                     st.subheader("🎯 Prediction Results")
                     
                     if prediction == 1:
                         st.success(f"✅ **LIKELY TO THROW A TOUCHDOWN!**")
-                        st.success(f"Confidence: {probability:.1%}")
                     else:
                         st.error(f"❌ **UNLIKELY TO THROW A TOUCHDOWN**")
-                        st.error(f"Confidence: {1-probability:.1%}")
+                    st.info(f"Probability: {probability:.1%} | Threshold: {threshold:.2f}")
                     
                     # Save prediction to database
                     if opponent:
                         try:
                             features_json = json.dumps(features)
+                            
+                            # For manual entries, also save the player name to basic_stats if not exists
+                            if 'mode' in locals() and mode == "Manual entry":
+                                try:
+                                    db.add_player(
+                                        player_id=player_id,
+                                        name=manual_name,
+                                        age=int(age_in),
+                                        height=float(ht_in),
+                                        weight=float(wt_in),
+                                        experience=float(exp_in),
+                                        position="QB"
+                                    )
+                                except Exception as e:
+                                    # Player might already exist, that's okay
+                                    pass
+                            
                             db.save_prediction(
                                 player_id=player_id,
                                 game_date=game_date.strftime("%Y-%m-%d"),
                                 opponent=opponent,
                                 prediction=int(prediction),
-                                confidence=float(probability if prediction == 1 else 1-probability),
+                                confidence=float(probability),
                                 features_used=features_json
                             )
                             st.success("Prediction saved to database!")
@@ -542,13 +621,16 @@ def show_prediction_page():
                     st.subheader("📈 Key Factors")
                     st.write("**Most important features for this prediction:**")
                     
-                    # Simple feature importance display
+                    # Simple feature importance display (features is a list in fixed order)
+                    # Order: [avg_yards, avg_tds, avg_attempts, age, experience, height, weight]
+                    avg_completion = recent_stats['completion_percentage'].mean() if 'completion_percentage' in recent_stats.columns else None
+                    avg_rating = recent_stats['passer_rating'].mean() if 'passer_rating' in recent_stats.columns else None
                     feature_importance = {
-                        "Recent TD Rate": f"{features['td_passes']:.1f} per game",
-                        "Passing Yards": f"{features['passing_yards']:.0f} avg",
-                        "Completion %": f"{features['completion_percentage']:.1f}%",
-                        "Experience": f"{features['experience']:.0f} years",
-                        "Passer Rating": f"{features['passer_rating']:.1f}"
+                        "Recent TD Rate": f"{features[1]:.1f} per game",
+                        "Passing Yards": f"{features[0]:.0f} avg",
+                        "Experience": f"{features[4]:.0f} years",
+                        "Completion %": f"{avg_completion:.1f}%" if avg_completion is not None and avg_completion == avg_completion else "N/A",
+                        "Passer Rating": f"{avg_rating:.1f}" if avg_rating is not None and avg_rating == avg_rating else "N/A"
                     }
                     
                     for feature, value in feature_importance.items():
@@ -680,20 +762,42 @@ def show_history_page():
     """Show prediction history page."""
     st.header("📊 Prediction History")
     
+    # Add filter options
+    col1, col2, col3 = st.columns([2, 1, 1])
+    with col1:
+        filter_player = st.text_input("Filter by Player ID (optional)", placeholder="e.g., johndoe/123456")
+    with col2:
+        limit = st.selectbox("Show", [10, 25, 50, 100], index=0)
+    with col3:
+        show_all = st.checkbox("Show all", value=False)
+    
     # Get prediction history
     try:
-        history = db.get_prediction_history()
+        if filter_player:
+            history = db.get_prediction_history(player_id=filter_player)
+        else:
+            history = db.get_prediction_history()
         
         if not history.empty:
             st.subheader("Recent Predictions")
             
             # Display recent predictions
-            for _, pred in history.head(10).iterrows():
+            display_limit = len(history) if show_all else limit
+            for _, pred in history.head(display_limit).iterrows():
                 col1, col2, col3 = st.columns([2, 1, 1])
                 
                 with col1:
+                    # Handle missing name (manual entries)
+                    player_name = pred.get('name', 'Unknown Player')
+                    if pd.isna(player_name) or player_name is None:
+                        player_name = f"Player {pred['player_id']}"
+                    
                     team = get_latest_team(str(pred['player_id'])) if 'player_id' in pred else 'Unknown'
-                    name_display = f"{pred['name']} ({team})" if isinstance(team, str) and team else pred['name']
+                    if team and team != 'Unknown':
+                        name_display = f"{player_name} ({team})"
+                    else:
+                        name_display = player_name
+                    
                     st.write(f"**{name_display}** vs {pred['opponent']}")
                     st.write(f"Date: {pred['game_date']}")
                 
@@ -731,6 +835,41 @@ def show_history_page():
     
     except Exception as e:
         st.error(f"Error loading prediction history: {e}")
+
+def show_add_player_page():
+    """Simple form to add or update a player in basic_stats."""
+    st.header("➕ Add/Update Player")
+    with st.form("add_player_form"):
+        player_id = st.text_input("Player ID (e.g., tombrady/2504211)")
+        name = st.text_input("Name (Last, First)")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            age = st.number_input("Age", min_value=0.0, step=1.0, format="%f")
+        with col2:
+            height = st.number_input("Height (inches)", min_value=0.0, step=1.0, format="%f")
+        with col3:
+            weight = st.number_input("Weight (lbs)", min_value=0.0, step=1.0, format="%f")
+        experience = st.number_input("Experience (years)", min_value=0.0, step=1.0, format="%f")
+        position = st.selectbox("Position", ["QB", "WR", "RB", "TE", "K", "P", "OL", "DL", "LB", "DB"]) 
+        submitted = st.form_submit_button("Save Player")
+    
+    if submitted:
+        if not player_id or not name:
+            st.error("Player ID and Name are required.")
+            return
+        ok = db.add_player(
+            player_id=player_id,
+            name=name,
+            age=age if age > 0 else None,
+            height=height if height > 0 else None,
+            weight=weight if weight > 0 else None,
+            experience=experience if experience > 0 else None,
+            position=position
+        )
+        if ok:
+            st.success("Player saved.")
+        else:
+            st.error("Failed to save player.")
 
 def show_about_page():
     """Show about page."""

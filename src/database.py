@@ -268,6 +268,34 @@ class NFLDatabase:
         finally:
             self.disconnect()
     
+    def add_player(self, player_id: str, name: str, age: Optional[float] = None,
+                   height: Optional[float] = None, weight: Optional[float] = None,
+                   experience: Optional[float] = None, position: str = "QB") -> bool:
+        """Insert or update a player in basic_stats."""
+        self.connect()
+        try:
+            self.conn.execute(
+                """
+                INSERT INTO basic_stats (player_id, name, age, height, weight, experience, position)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(player_id) DO UPDATE SET
+                    name=excluded.name,
+                    age=excluded.age,
+                    height=excluded.height,
+                    weight=excluded.weight,
+                    experience=excluded.experience,
+                    position=excluded.position
+                """,
+                (player_id, name, age, height, weight, experience, position)
+            )
+            self.conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Error adding/updating player: {e}")
+            return False
+        finally:
+            self.disconnect()
+    
     def get_prediction_history(self, player_id: str = None) -> pd.DataFrame:
         """
         Get prediction history from database.
@@ -284,7 +312,7 @@ class NFLDatabase:
             query = """
             SELECT p.*, bs.name 
             FROM predictions p
-            JOIN basic_stats bs ON p.player_id = bs.player_id
+            LEFT JOIN basic_stats bs ON p.player_id = bs.player_id
             WHERE p.player_id = ?
             ORDER BY p.created_at DESC
             """
@@ -293,7 +321,7 @@ class NFLDatabase:
             query = """
             SELECT p.*, bs.name 
             FROM predictions p
-            JOIN basic_stats bs ON p.player_id = bs.player_id
+            LEFT JOIN basic_stats bs ON p.player_id = bs.player_id
             ORDER BY p.created_at DESC
             """
             df = pd.read_sql_query(query, self.conn)
