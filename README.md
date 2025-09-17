@@ -297,7 +297,8 @@ This project is open-source under the MIT License.
 
 - 📬 [LinkedIn](https://linkedin.com/in/sheltonbumhe)
 - 🌐 [Portfolio](https://sheltonbumhe.com)
-- 📧 [Email](mailto:shelton@example.com)
+- 📧 [Email](mailto:sbumhe2@huskers.unl.edu)
+  
 
 ---
 
