@@ -1,10 +1,10 @@
-# 🏈 NFL QB Touchdown Predictor
+# NFL QB Touchdown Predictor
 
 A **database-driven** machine learning project that predicts whether a quarterback (QB) will throw at least one touchdown (TD) in a given NFL game using player statistics, game context, and historical performance data.
 
 ---
 
-## 🎯 Project Objective
+##  Project Objective
 
 > Predict whether an NFL quarterback will throw a **touchdown pass** in a game using past performance and game details.
 
@@ -12,14 +12,14 @@ This binary classification model uses **historical QB game logs**, **player care
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
-- **🗄️ Database-driven**: All data stored in SQLite for easy management and validation
-- **🎯 Real-time predictions**: Make predictions using current player data from database
-- **📊 Data validation**: Comprehensive data quality checks and validation
-- **🔄 Automated workflow**: One-command setup and deployment
-- **📈 Historical tracking**: View prediction history and accuracy
-- **🌐 Modern web app**: Beautiful Streamlit interface with multiple pages
+- ** Database-driven**: All data stored in SQLite for easy management and validation
+- ** Real-time predictions**: Make predictions using current player data from database
+- **Data validation**: Comprehensive data quality checks and validation
+- **Automated workflow**: One-command setup and deployment
+- **Historical tracking**: View prediction history and accuracy
+- **Modern web app**: Beautiful Streamlit interface with multiple pages
 
 ---
 
@@ -63,7 +63,7 @@ machine-learning-nfl-touchdowns/
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Install Dependencies
 ```bash
@@ -76,10 +76,10 @@ python main.py
 ```
 
 This will:
-- ✅ Load all CSV data into the database
-- ✅ Validate data quality
-- ✅ Preprocess data for modeling
-- ✅ Launch the Streamlit web app
+-  Load all CSV data into the database
+- Validate data quality
+-  Preprocess data for modeling
+- Launch the Streamlit web app
 
 ### 3. Alternative Commands
 
@@ -301,7 +301,7 @@ This project is open-source under the MIT License.
 
 ---
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - NFL.com for providing the statistical data
 - Streamlit for the excellent web app framework
@@ -309,7 +309,7 @@ This project is open-source under the MIT License.
 
 ---
 
-## 📊 Project Statistics
+## 📊Project Statistics
 
 - **Total Records**: 100,000+ game logs
 - **Quarterbacks**: 500+ players
@@ -319,6 +319,6 @@ This project is open-source under the MIT License.
 
 ---
 
-*Ready to predict some touchdowns? 🏈 Let's go!*
+*Ready to predict some touchdowns?  Let's go!*
 
 
