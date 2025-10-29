@@ -1,0 +1,14 @@
+build:
+  docker:
+    web: Dockerfile
+  config:
+    NODE_ENV: production
+    PYTHON_VERSION: 3.9.18
+
+release:
+  image: web
+  command:
+    - python backend/advanced_ml_webapp.py
+
+run:
+  web: python backend/advanced_ml_webapp.py

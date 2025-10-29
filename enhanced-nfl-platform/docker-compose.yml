@@ -1,0 +1,86 @@
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: nfl_ai_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: NewStrongPassword!123
+      MYSQL_DATABASE: nfl_ai
+      MYSQL_USER: nfl_user
+      MYSQL_PASSWORD: nfl_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./setup_mysql.sql:/docker-entrypoint-initdb.d/setup_mysql.sql
+    networks:
+      - nfl_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Backend API
+  backend:
+    build: .
+    container_name: nfl_ai_backend
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=mysql+pymysql://nfl_user:nfl_password@mysql:3306/nfl_ai
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=nfl_user
+      - MYSQL_PASSWORD=nfl_password
+      - MYSQL_DATABASE=nfl_ai
+      - PORT=8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - nfl_network
+    volumes:
+      - ./backend/models:/app/backend/models
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend (Nginx)
+  frontend:
+    image: nginx:alpine
+    container_name: nfl_ai_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - backend
+    networks:
+      - nfl_network
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: nfl_ai_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - nfl_network
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  nfl_network:
+    driver: bridge

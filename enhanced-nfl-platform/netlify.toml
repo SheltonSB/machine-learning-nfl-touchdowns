@@ -1,0 +1,24 @@
+[build]
+  publish = "frontend"
+  command = "cd backend && python3 complete_webapp.py"
+
+[build.environment]
+  PYTHON_VERSION = "3.9"
+
+[[redirects]]
+  from = "/api/*"
+  to = "http://localhost:8000/api/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/complete_webapp.html"
+  status = 200
+
+[functions]
+  directory = "netlify/functions"
+
+[dev]
+  command = "cd backend && python3 complete_webapp.py"
+  port = 8000
+  publish = "frontend"
