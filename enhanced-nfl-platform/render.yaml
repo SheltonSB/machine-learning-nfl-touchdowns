@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: nfl-ai-platform
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python enhanced-nfl-platform/backend/working_app.py
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: HOST
+        value: 0.0.0.0
