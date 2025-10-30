@@ -1,0 +1,31 @@
+name: Security Audit
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Python dependency audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r enhanced-nfl-platform/backend/requirements.txt
+          pip install pip-audit
+          pip-audit -r enhanced-nfl-platform/backend/requirements.txt
+
+      - name: Node dependency audit
+        working-directory: enhanced-nfl-platform/frontend
+        run: |
+          npm install --package-lock-only
+          npm audit --omit=dev || true

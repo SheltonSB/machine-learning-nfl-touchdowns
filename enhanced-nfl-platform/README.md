@@ -4,6 +4,12 @@ A comprehensive platform for NFL analytics and touchdown prediction that combine
 
 ---
 
+## Demo & Walkthrough
+
+- **Interactive Storybook**: `npm run storybook` then open `http://localhost:6006`.
+- **Live landing pages**: publish `frontend/landing/dist` to GitHub Pages (copy contents into your `gh-pages` branch).
+- **Video overview**: [Watch the 3-minute walkthrough](https://www.example.com/demo-placeholder). Replace the URL with your Loom/YouTube link when ready.
+
 ## Project Structure
 
 ```
@@ -77,6 +83,66 @@ Backends running in managed environments (Render, Railway, Heroku, etc.) should 
 | Shell scripts | `deploy_*.sh`, `update_domain.sh` | Provider-specific automation | Load credentials from `.env` / provider secrets before running |
 
 Copy `.env.template` to `.env` for each service, fill in provider-specific credentials, and configure the same values in your deployment dashboard (Render, Railway, Netlify, etc.). Never commit populated `.env` files.
+
+
+---
+
+## Architecture Diagram
+
+```mermaid
+flowchart LR
+    Browser[React Frontend] -->|REST| API[FastAPI Backend]
+    API -->|Queries| DB[(Postgres/SQLite)]
+    API -->|Cache| Redis[(Redis)]
+    API -->|Predict| MLPipeline[ML Pipeline]
+    MLPipeline -->|Models| Models[(Model Registry)]
+    API -->|Context| RAG[RAG System]
+    RAG --> VectorDB[(Vector Index)]
+```
+
+## Sequence: Prediction Request
+
+```mermaid
+sequenceDiagram
+    participant U as User (React UI)
+    participant F as FastAPI
+    participant P as ML Pipeline
+    participant D as Database
+
+    U->>F: POST /api/v1/predictions
+    F->>P: predict(features, model)
+    P-->>F: probability, metadata
+    F->>D: persist prediction history
+    F-->>U: JSON response (probability, confidence)
+```
+
+## Runbook
+
+| Task | Command | Notes |
+|------|---------|-------|
+| Bootstrap backend | `pip install -r backend/requirements.txt` | Creates virtualenv dependencies |
+| Launch local API | `uvicorn main:app --reload` (from `backend/`) | Uses SQLite + TEST_MODE toggles |
+| Run backend tests | `make backend-test` | Enforces coverage ≥ 80% via pytest + coverage |
+| Run frontend tests | `make frontend-test` | Executes React Testing Library suite |
+| Launch Storybook | `make frontend-storybook` | Visual review of UI components |
+| Generate landing pages | `python frontend/landing/build_landing_pages.py` | Outputs static pages to `frontend/landing/dist` |
+| Serve landing pages | `python -m http.server --directory frontend/landing/dist 8080` | Visit `http://localhost:8080/enhanced.html` |
+| Seed sample data | `make seed` | Loads CSV fixtures into SQLite |
+| Security audit | `make audit` | Runs pip-audit and npm audit (non-blocking on moderate issues) |
+
+**Key environment variables**
+
+- `DATABASE_URL`: Override to point at Postgres/MySQL in production.
+- `REDIS_URL`: Configure cache/queue endpoint.
+- `OPENAI_API_KEY`, `VECTOR_DB_API_KEY`: Required for full RAG capabilities.
+- `TEST_MODE`: Set to `true` inside CI to bypass heavyweight model initialisation.
+
+**Failure modes to watch**
+
+1. **Database unavailable** – API boots but returns 500; confirm `DATABASE_URL`, run migrations, or fall back to SQLite for demos.
+2. **RAG dependencies missing** – Pinecone credentials absent; the assistant falls back to in-memory search, log warning emitted.
+3. **Model cache missing** – Pipelines retrain on start; use `models/` artefacts or rerun training before production deploy.
+
 
 ## Key Features
 
@@ -155,6 +221,17 @@ This starts the complete stack (API, frontend, database, supporting services) us
 ---
 
 ## Machine Learning & RAG Components
+
+---
+
+## Security Hardening
+
+- **Secret management**: copy `.env.template` to `.env`, store values in your deployment platform (Render/Railway/Heroku) as managed secrets. Never commit populated env files.
+- **CORS policies**: update `settings.ALLOWED_HOSTS` in `app/core/config.py` before exposing the API publicly.
+- **Authentication**: leverage `app/models/database.User` and extend FastAPI routers with JWT middleware (see `python-jose` dependency).
+- **Rate limiting**: front the API with an ingress (nginx, Cloudflare) and enable request quotas for `/api/v1/rag/*`.
+- **Auditing**: run `make audit` locally or in CI to execute `pip-audit` and `npm audit`. Address high/critical findings before release.
+- **Transport security**: terminate TLS at your load balancer (Render, Railway, or AWS ALB) and enforce HTTPS-only traffic.
 
 - **Model Zoo**: Gradient boosting, deep learning, and sequence models tuned for quarterback performance.
 - **Feature Engineering**: Rolling averages, situational stats, contextual game features.

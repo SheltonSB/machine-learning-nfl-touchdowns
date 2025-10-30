@@ -6,7 +6,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
-import redis
+try:
+    import redis  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency for tests
+    redis = None
+
 from typing import Generator
 
 from app.core.config import settings
@@ -22,7 +26,14 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 # Redis for caching
-redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+if redis is not None:
+    redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+else:
+    class _RedisStub:
+        def __getattr__(self, name):
+            raise RuntimeError("Redis library not installed; install redis or set REDIS_URL appropriately")
+
+    redis_client = _RedisStub()
 
 def get_db() -> Generator[Session, None, None]:
     """Get database session"""

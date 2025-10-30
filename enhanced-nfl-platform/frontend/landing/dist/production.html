@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏈 NFL AI/ML Platform - Live Production</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../static/landing.css" rel="stylesheet">
+    
+</head>
+<body style="--hero-gradient-start:#2d5a27; --hero-gradient-end:#4a7c59; --user-message-bg:#2d5a27; --ai-message-bg:#ffffff; --accent-positive:#28a745; --accent-negative:#dc3545; --reasoning-border:#2d5a27; --indicator-gradient:linear-gradient(45deg,#2d5a27,#4a7c59,#6b8e23);">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-football-ball me-2"></i>
+                NFL AI/ML Platform — Production
+                
+                <span class="badge-indicator ms-2">LIVE</span>
+                
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="#metrics">SLOs</a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Playbooks</a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="#chat">Operational AI</a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="#cta">Deploy</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section" id="hero">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold mb-3">Serve touchdown predictions with production SLOs</h1>
+            <p class="lead mb-3">Blueprinted for stadium-scale loads, blue/green releases, and compliance-ready logging.</p>
+            <p class="mb-4">Automated retraining, audit trails, and golden-path observability keep engineers confident on Sunday night.</p>
+            <a href="#cta" class="btn btn-light btn-lg">View deployment steps</a>
+        </div>
+    </section>
+
+    
+    <section id="metrics" class="py-5">
+        <div class="container">
+            <div class="row text-center g-4">
+                
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <i class="fas fa-clock fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">Release cadence</h5>
+                            <h3 class="text-primary">Weekly</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <i class="fas fa-cloud fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">Cloud targets</h5>
+                            <h3 class="text-primary">AWS / GCP</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <i class="fas fa-database fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">Data retention</h5>
+                            <h3 class="text-primary">180 days</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <i class="fas fa-shield-halved fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">Runtime policies</h5>
+                            <h3 class="text-primary">OPA</h3>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </section>
+    
+
+    <section id="features" class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-4">Production playbooks</h2>
+            <p class="text-center text-muted mb-5">Everything required to harden the stack for fans, broadcasters, and sportsbooks.</p>
+            <div class="row g-4">
+                
+            </div>
+        </div>
+    </section>
+
+    
+    <section id="chat" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-4">Operations co-pilot</h2>
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="chat-container shadow-sm">
+                        
+                        <div class="message user-message">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-user me-2"></i>
+                                <strong>User</strong>
+                                <span class="ms-2 small text-muted">SRE</span>
+                            </div>
+                            <p class="mb-2">Why did latency spike in the 4th quarter?</p>
+                            
+                        </div>
+                        
+                        <div class="message ai-message">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-robot me-2"></i>
+                                <strong>Ai</strong>
+                                <span class="ms-2 small text-muted">AI</span>
+                            </div>
+                            <p class="mb-2">Live inference hit autoscale limits. Queue depth reached 80th percentile; launching two additional instances resolved latency. See Grafana dashboard 12.</p>
+                            
+                            <span class="badge bg-primary confidence-badge">Confidence 78.0%</span>
+                            
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">24/7 incident ready</h5>
+                            <p class="card-text text-muted">Ask the assistant for rollback steps, data drift reports, or release validations.</p>
+                            <ul class="list-unstyled">
+                                
+                                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Incident runbooks with links into observability dashboards</li>
+                                
+                                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Auto-summarised change logs for coaching staff</li>
+                                
+                                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Assistive prompts for real-time anomaly triage</li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+
+    
+    <section id="cta" class="py-5 bg-light">
+        <div class="container text-center">
+            <h2 class="mb-3">Launch the production stack</h2>
+            <p class="lead mb-4">Use docker-compose locally, then promote via Render, Railway, or ECS pipelines.</p>
+            <a href="../DEPLOYMENT_GUIDE.md" class="btn btn-primary btn-lg">Open deployment guide</a>
+        </div>
+    </section>
+    
+
+    <footer class="py-4 bg-dark text-white text-center">
+        <div class="container">
+            <p class="mb-0">Production deployment kit — instrumentation ready.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

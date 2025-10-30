@@ -46,6 +46,7 @@ async def lifespan(app: FastAPI):
     
     # Initialize ML pipeline
     ml_pipeline = MLPipeline()
+    set_ml_pipeline(ml_pipeline)
     await ml_pipeline.initialize()
     logger.info("ML Pipeline initialized")
     

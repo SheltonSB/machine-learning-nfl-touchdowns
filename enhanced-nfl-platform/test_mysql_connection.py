@@ -152,8 +152,8 @@ if __name__ == "__main__":
     success = test_connection()
     
     if success:
-        print("\n✅ Ready to start the NFL AI platform!")
+        print("\n Ready to start the NFL AI platform!")
         print("Run: python mysql_production_app.py")
     else:
-        print("\n❌ Please fix the MySQL connection issues first.")
+        print("\n Please fix the MySQL connection issues first.")
         sys.exit(1)

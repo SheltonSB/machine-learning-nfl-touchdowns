@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏈 NFL AI/ML Platform with Llama</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../static/landing.css" rel="stylesheet">
+    
+</head>
+<body style="--hero-gradient-start:#1e3c72; --hero-gradient-end:#2a5298; --user-message-bg:#007bff; --ai-message-bg:#ffffff; --accent-positive:#28a745; --accent-negative:#dc3545; --reasoning-border:#007bff; --indicator-gradient:linear-gradient(45deg,#ff6b6b,#4ecdc4);">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-football-ball me-2"></i>
+                NFL AI/ML Platform with Llama
+                
+                <span class="badge-indicator ms-2">LLAMA POWERED</span>
+                
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="#metrics">Metrics</a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Capabilities</a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="#chat">AI Assistant</a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="#cta">Get access</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section" id="hero">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold mb-3">Bring LLaMA intelligence to your touchdown predictions</h1>
+            <p class="lead mb-3">Blend traditional analytics with retrieval-augmented reasoning and live roster context.</p>
+            <p class="mb-4">This enhanced experience ships with guarded LLaMA prompts, a curated knowledge base, and instant what-if analysis for coaches and scouts.</p>
+            <a href="#features" class="btn btn-light btn-lg">Explore enhanced insights</a>
+        </div>
+    </section>
+
+    
+    <section id="metrics" class="py-5">
+        <div class="container">
+            <div class="row text-center g-4">
+                
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <i class="fas fa-gauge fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">Latency</h5>
+                            <h3 class="text-primary">&lt; 250 ms</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <i class="fas fa-chart-line fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">Touchdown lift</h5>
+                            <h3 class="text-primary">+9%</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <i class="fas fa-robot fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">LLM coverage</h5>
+                            <h3 class="text-primary">18K docs</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <i class="fas fa-users fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">Analyst seats</h5>
+                            <h3 class="text-primary">Unlimited</h3>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </section>
+    
+
+    <section id="features" class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-4">Why teams choose the enhanced stack</h2>
+            <p class="text-center text-muted mb-5">A single pane of glass for scouting, game planning, and RAG-assisted research.</p>
+            <div class="row g-4">
+                
+            </div>
+        </div>
+    </section>
+
+    
+    <section id="chat" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-4">AI assistant with retrieval reasoning</h2>
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="chat-container shadow-sm">
+                        
+                        <div class="message user-message">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-user me-2"></i>
+                                <strong>User</strong>
+                                <span class="ms-2 small text-muted">Coach</span>
+                            </div>
+                            <p class="mb-2">How does Mahomes perform against disguises on 3rd and long?</p>
+                            
+                        </div>
+                        
+                        <div class="message ai-message">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-robot me-2"></i>
+                                <strong>Ai</strong>
+                                <span class="ms-2 small text-muted">LLM</span>
+                            </div>
+                            <p class="mb-2">Mahomes averages 8.4 YPA versus simulated pressure on 3rd and 7+. His touchdown probability climbs to 62%, driven by crossers. See full breakdown in the Chiefs defensive install doc.</p>
+                            
+                            <span class="badge bg-primary confidence-badge">Confidence 86.0%</span>
+                            
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Designed for analysts and coordinators</h5>
+                            <p class="card-text text-muted">Blend conversational queries with structured data pulls. Every answer ships with references so your coaching staff can trust the insight.</p>
+                            <ul class="list-unstyled">
+                                
+                                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Reference-linked answers sourced from Pinecone</li>
+                                
+                                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Confidence scoring with rationale snippets</li>
+                                
+                                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Drop-in Slack integration for sideline chats</li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+
+    
+    <section id="cta" class="py-5 bg-light">
+        <div class="container text-center">
+            <h2 class="mb-3">Upgrade your scouting workflow</h2>
+            <p class="lead mb-4">Schedule a walkthrough or clone the repository to run it locally.</p>
+            <a href="mailto:hello@nfl-ml.example" class="btn btn-primary btn-lg">Request a demo</a>
+        </div>
+    </section>
+    
+
+    <footer class="py-4 bg-dark text-white text-center">
+        <div class="container">
+            <p class="mb-0">Built by Shelton Bumhe — enhanced stack with LLaMA retrieval.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

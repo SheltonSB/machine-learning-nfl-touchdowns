@@ -3,21 +3,46 @@ RAG (Retrieval-Augmented Generation) System for NFL Data
 Uses vector embeddings and LLMs to answer natural language questions
 """
 
+import os
 import numpy as np
 import pandas as pd
 from typing import List, Dict, Any, Optional
 import logging
-from sentence_transformers import SentenceTransformer
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
-import pinecone
-from pinecone import Pinecone
-import json
-import asyncio
-from pathlib import Path
-
-from app.core.config import settings
-from app.core.database import get_db
 from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
+
+SKIP_RAG_IMPORTS = os.getenv("SKIP_RAG_IMPORTS") == "1"
+
+if not SKIP_RAG_IMPORTS:
+    try:
+        from sentence_transformers import SentenceTransformer  # type: ignore
+    except ImportError:  # pragma: no cover - optional dependency
+        SentenceTransformer = None
+else:
+    SentenceTransformer = None
+
+if not SKIP_RAG_IMPORTS:
+    try:
+        from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM  # type: ignore
+    except ImportError:  # pragma: no cover - optional dependency
+        pipeline = None
+        AutoTokenizer = None
+        AutoModelForCausalLM = None
+else:
+    pipeline = None
+    AutoTokenizer = None
+    AutoModelForCausalLM = None
+
+if not SKIP_RAG_IMPORTS:
+    try:
+        import pinecone  # type: ignore
+        from pinecone import Pinecone  # type: ignore
+    except ImportError:  # pragma: no cover - optional dependency
+        pinecone = None
+        Pinecone = None
+else:
+    pinecone = None
+    Pinecone = None
 
 logger = logging.getLogger(__name__)
 
@@ -57,12 +82,16 @@ class RAGSystem:
     async def _initialize_embedding_model(self):
         """Initialize the sentence transformer model"""
         logger.info("Loading embedding model...")
+        if SentenceTransformer is None:
+            raise RuntimeError('sentence-transformers is not installed; install it to enable RAG embeddings.')
         self.embedding_model = SentenceTransformer(settings.EMBEDDING_MODEL)
         logger.info("Embedding model loaded successfully")
     
     async def _initialize_llm(self):
         """Initialize the language model"""
         logger.info("Loading language model...")
+        if pipeline is None:
+            raise RuntimeError('transformers is not installed; install it to enable language model support.')
         
         # Use a smaller model for faster inference
         model_name = "microsoft/DialoGPT-small"  # Changed to smaller model
@@ -82,6 +111,11 @@ class RAGSystem:
     async def _initialize_vector_db(self):
         """Initialize Pinecone vector database"""
         logger.info("Initializing vector database...")
+        
+        if Pinecone is None:
+            logger.warning('Pinecone client is not installed; defaulting to in-memory vector store.')
+            self.vector_db = None
+            return
         
         try:
             # Initialize Pinecone
@@ -428,3 +462,19 @@ class RAGSystem:
                 "embedding_model": settings.EMBEDDING_MODEL
             }
 
+
+_rag_system_singleton = None
+
+
+def set_rag_system(instance: "RAGSystem") -> None:
+    global _rag_system_singleton
+    _rag_system_singleton = instance
+
+
+def get_rag_system() -> "RAGSystem":
+    if _rag_system_singleton is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="RAG System not initialized"
+        )
+    return _rag_system_singleton

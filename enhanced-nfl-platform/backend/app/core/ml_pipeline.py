@@ -3,6 +3,8 @@ Advanced ML Pipeline with Multiple Models
 Supports XGBoost, TensorFlow, PyTorch, and Ensemble methods
 """
 
+import os
+
 import numpy as np
 import pandas as pd
 import joblib
@@ -11,11 +13,38 @@ from typing import Dict, List, Tuple, Optional, Any
 import logging
 from pathlib import Path
 
-# Machine Learning Libraries
-import xgboost as xgb
-import tensorflow as tf
-import torch
-import torch.nn as nn
+from fastapi import HTTPException, status
+
+# Machine Learning Libraries (optional in test environments)
+SKIP_HEAVY_IMPORTS = os.getenv("SKIP_ML_IMPORTS") == "1"
+
+if not SKIP_HEAVY_IMPORTS:
+    try:
+        import xgboost as xgb  # type: ignore
+    except ImportError:  # pragma: no cover - optional dependency
+        xgb = None
+else:
+    xgb = None
+
+if not SKIP_HEAVY_IMPORTS:
+    try:
+        import tensorflow as tf  # type: ignore
+    except ImportError:  # pragma: no cover - optional dependency
+        tf = None
+else:
+    tf = None
+
+if not SKIP_HEAVY_IMPORTS:
+    try:
+        import torch  # type: ignore
+        import torch.nn as nn  # type: ignore
+    except ImportError:  # pragma: no cover - optional dependency
+        torch = None
+        nn = None
+else:
+    torch = None
+    nn = None
+
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, classification_report
 from sklearn.preprocessing import StandardScaler
@@ -25,10 +54,12 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-class PyTorchLSTM(nn.Module):
+class PyTorchLSTM(nn.Module if nn is not None else object):  # type: ignore[misc]
     """PyTorch LSTM model for sequence prediction"""
     
     def __init__(self, input_size: int = 15, hidden_size: int = 64, num_layers: int = 2, dropout: float = 0.2):
+        if nn is None or torch is None:  # pragma: no cover - executed only when torch missing
+            raise RuntimeError("PyTorch is not installed; install torch to enable LSTM support.")
         super(PyTorchLSTM, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -97,34 +128,48 @@ class MLPipeline:
         """Initialize all model types"""
         
         # XGBoost Model
-        self.models['xgboost'] = xgb.XGBClassifier(
-            n_estimators=100,
-            max_depth=6,
-            learning_rate=0.1,
-            random_state=42,
-            eval_metric='logloss'
-        )
-        
+        if xgb is not None:
+            self.models['xgboost'] = xgb.XGBClassifier(
+                n_estimators=100,
+                max_depth=6,
+                learning_rate=0.1,
+                random_state=42,
+                eval_metric='logloss'
+            )
+        else:
+            logger.warning('XGBoost library not installed; xgboost model disabled.')
+            self.models['xgboost'] = None
+
         # TensorFlow Model
-        self.models['tensorflow'] = self._build_tensorflow_model()
-        
+        if tf is not None:
+            self.models['tensorflow'] = self._build_tensorflow_model()
+            self.scalers['tensorflow'] = StandardScaler()
+        else:
+            logger.warning('TensorFlow library not installed; tensorflow model disabled.')
+            self.models['tensorflow'] = None
+            self.scalers['tensorflow'] = None
+
         # PyTorch Model
-        self.models['pytorch'] = PyTorchLSTM(
-            input_size=len(self.feature_columns),
-            hidden_size=64,
-            num_layers=2,
-            dropout=0.2
-        )
-        
+        if torch is not None and nn is not None:
+            self.models['pytorch'] = PyTorchLSTM(
+                input_size=len(self.feature_columns),
+                hidden_size=64,
+                num_layers=2,
+                dropout=0.2
+            )
+            self.scalers['pytorch'] = StandardScaler()
+        else:
+            logger.warning('PyTorch library not installed; pytorch model disabled.')
+            self.models['pytorch'] = None
+            self.scalers['pytorch'] = None
+
         # Ensemble Model (will be created after training)
         self.models['ensemble'] = None
-        
-        # Scalers for each model
-        self.scalers['tensorflow'] = StandardScaler()
-        self.scalers['pytorch'] = StandardScaler()
     
     def _build_tensorflow_model(self):
         """Build TensorFlow neural network"""
+        if tf is None:
+            raise RuntimeError("TensorFlow is not installed; install tensorflow to enable this model.")
         model = tf.keras.Sequential([
             tf.keras.layers.Dense(128, activation='relu', input_shape=(len(self.feature_columns),)),
             tf.keras.layers.Dropout(0.3),
@@ -165,8 +210,12 @@ class MLPipeline:
             if model_name == 'xgboost':
                 self.models[model_name] = joblib.load(model_path)
             elif model_name == 'tensorflow':
+                if tf is None:
+                    raise RuntimeError('TensorFlow is not installed; cannot load tensorflow model.')
                 self.models[model_name] = tf.keras.models.load_model(model_path)
             elif model_name == 'pytorch':
+                if torch is None:
+                    raise RuntimeError('PyTorch is not installed; cannot load pytorch model.')
                 model_state = torch.load(model_path, map_location='cpu')
                 self.models[model_name].load_state_dict(model_state)
                 self.models[model_name].eval()
@@ -192,12 +241,18 @@ class MLPipeline:
         
         # Placeholder training logic
         if model_name == 'xgboost':
+            if xgb is None:
+                raise RuntimeError('XGBoost is not installed; cannot train xgboost model.')
             # XGBoost training would go here
             pass
         elif model_name == 'tensorflow':
+            if tf is None:
+                raise RuntimeError('TensorFlow is not installed; cannot train tensorflow model.')
             # TensorFlow training would go here
             pass
         elif model_name == 'pytorch':
+            if torch is None:
+                raise RuntimeError('PyTorch is not installed; cannot train pytorch model.')
             # PyTorch training would go here
             pass
     
@@ -350,3 +405,18 @@ class MLPipeline:
             logger.error(f"Error saving {model_name} model: {e}")
             raise
 
+_ml_pipeline_singleton = None
+
+
+def set_ml_pipeline(instance: "MLPipeline") -> None:
+    global _ml_pipeline_singleton
+    _ml_pipeline_singleton = instance
+
+
+def get_ml_pipeline() -> "MLPipeline":
+    if _ml_pipeline_singleton is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="ML Pipeline not initialized"
+        )
+    return _ml_pipeline_singleton

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../static/landing.css" rel="stylesheet">
+    {% if page.extra_css %}
+    <style>
+        {{ page.extra_css | safe }}
+    </style>
+    {% endif %}
+</head>
+<body style="--hero-gradient-start:{{ page.theme.hero_start }}; --hero-gradient-end:{{ page.theme.hero_end }}; --user-message-bg:{{ page.theme.user_message_bg }}; --ai-message-bg:{{ page.theme.ai_message_bg }}; --accent-positive:{{ page.theme.positive }}; --accent-negative:{{ page.theme.negative }}; --reasoning-border:{{ page.theme.reasoning_border }}; --indicator-gradient:{{ page.theme.indicator_gradient }};">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-football-ball me-2"></i>
+                {{ page.nav.brand }}
+                {% if page.nav.badge %}
+                <span class="badge-indicator ms-2">{{ page.nav.badge }}</span>
+                {% endif %}
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% for link in page.nav.links %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="#{{ link.id }}">{{ link.label }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section" id="hero">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold mb-3">{{ page.hero.heading }}</h1>
+            <p class="lead mb-3">{{ page.hero.subheading }}</p>
+            <p class="mb-4">{{ page.hero.description }}</p>
+            <a href="#{{ page.hero.cta.target }}" class="btn btn-light btn-lg">{{ page.hero.cta.label }}</a>
+        </div>
+    </section>
+
+    {% if page.metrics %}
+    <section id="metrics" class="py-5">
+        <div class="container">
+            <div class="row text-center g-4">
+                {% for metric in page.metrics %}
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <i class="{{ metric.icon }} fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">{{ metric.label }}</h5>
+                            <h3 class="text-primary">{{ metric.value }}</h3>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <section id="features" class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-4">{{ page.features.title }}</h2>
+            <p class="text-center text-muted mb-5">{{ page.features.subtitle }}</p>
+            <div class="row g-4">
+                {% for feature in page.features.cards %}
+                <div class="col-md-4">
+                    <div class="card feature-card shadow-sm h-100">
+                        <div class="card-body">
+                            <i class="{{ feature.icon }} fa-2x text-primary mb-3"></i>
+                            <h5 class="card-title">{{ feature.title }}</h5>
+                            <p class="card-text text-muted">{{ feature.description }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    {% if page.ai_section %}
+    <section id="chat" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-4">{{ page.ai_section.title }}</h2>
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="chat-container shadow-sm">
+                        {% for message in page.ai_section.conversation %}
+                        <div class="message {{ 'user-message' if message.role == 'user' else 'ai-message' }}">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas {{ 'fa-user' if message.role == 'user' else 'fa-robot' }} me-2"></i>
+                                <strong>{{ message.role|title }}</strong>
+                                <span class="ms-2 small text-muted">{{ message.timestamp }}</span>
+                            </div>
+                            <p class="mb-2">{{ message.text }}</p>
+                            {% if message.confidence is not none %}
+                            <span class="badge bg-primary confidence-badge">Confidence {{ (message.confidence * 100) | round(0) }}%</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ page.ai_section.detail_title }}</h5>
+                            <p class="card-text text-muted">{{ page.ai_section.detail_description }}</p>
+                            <ul class="list-unstyled">
+                                {% for item in page.ai_section.highlights %}
+                                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if page.call_to_action %}
+    <section id="cta" class="py-5 bg-light">
+        <div class="container text-center">
+            <h2 class="mb-3">{{ page.call_to_action.title }}</h2>
+            <p class="lead mb-4">{{ page.call_to_action.subtitle }}</p>
+            <a href="{{ page.call_to_action.href }}" class="btn btn-primary btn-lg">{{ page.call_to_action.label }}</a>
+        </div>
+    </section>
+    {% endif %}
+
+    <footer class="py-4 bg-dark text-white text-center">
+        <div class="container">
+            <p class="mb-0">{{ page.footer }}</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

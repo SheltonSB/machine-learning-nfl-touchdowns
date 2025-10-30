@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Box, LinearProgress, Typography } from '@mui/material';
 
-function LoadingState({ message }) {
+function LoadingState({ message = 'Loading...' }) {
     return (
         <Box sx={{ width: '100%', mt: 2 }}>
             <LinearProgress />
@@ -17,10 +17,6 @@ function LoadingState({ message }) {
 
 LoadingState.propTypes = {
     message: PropTypes.string,
-};
-
-LoadingState.defaultProps = {
-    message: 'Loading...',
 };
 
 export default LoadingState;

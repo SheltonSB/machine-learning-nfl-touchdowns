@@ -10,19 +10,6 @@ Predict whether an NFL quarterback will throw a touchdown pass in a game using p
 
 ---
 
-## Dependency Matrix
-
-| Environment | Install Command | Notes |
-|-------------|-----------------|-------|
-| Core pipeline | `pip install -r requirements.txt` | CLI workflow (data load, validation, training) |
-| Enhanced backend (inside `enhanced-nfl-platform/`) | `pip install -r backend/requirements.txt` | Base API + ML stack |
-| Backend production extras | `pip install -r backend/requirements-production.txt` | Adds vector search, OpenAI, Postgres drivers |
-| Backend with LLaMA | `pip install -r backend/requirements-llama.txt` | Production stack plus acceleration libraries |
-| Frontend | `cd enhanced-nfl-platform/frontend && npm install` | React dashboard dependencies |
-
-Copy `.env.template` from `enhanced-nfl-platform/` to `.env` and fill in provider credentials before running deployments.
-
-
 ## Key Features
 
 - Database-backed storage using SQLite
@@ -86,6 +73,8 @@ python main.py
 
 This command loads data into the database, validates data quality, preprocesses features, and executes the modeling workflow.
 
+Run reproducible tasks with `make`: `make backend-test`, `make frontend-test`, `make seed`, and `make docker-up`.
+
 ### Useful Commands
 
 ```bash
@@ -97,6 +86,9 @@ python main.py --validate
 
 # Preprocess data only
 python main.py --preprocess
+
+# Launch the app only
+python main.py --app
 
 # Check project status
 python main.py --status

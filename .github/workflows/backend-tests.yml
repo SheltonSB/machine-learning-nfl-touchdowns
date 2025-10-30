@@ -30,4 +30,4 @@ jobs:
       - name: Run backend tests
         env:
           TEST_MODE: 'true'
-        run: pytest enhanced-nfl-platform/backend/tests
+        run: pytest --cov=app --cov-report=term --cov-report=xml --cov-fail-under=80 enhanced-nfl-platform/backend/tests
