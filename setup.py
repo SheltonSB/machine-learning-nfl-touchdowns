@@ -15,7 +15,7 @@ import platform
 def print_banner():
     """Print the project banner."""
     print("=" * 60)
-    print("🏈 NFL QB Touchdown Predictor - Setup")
+    print("NFL QB Touchdown Predictor - Setup")
     print("=" * 60)
     print("A database-driven machine learning project for predicting")
     print("NFL quarterback touchdowns using historical data.")
@@ -23,34 +23,34 @@ def print_banner():
 
 def check_python_version():
     """Check if Python version is compatible."""
-    print("🐍 Checking Python version...")
+    print("Checking Python version...")
     
     version = sys.version_info
     if version.major < 3 or (version.major == 3 and version.minor < 8):
-        print("❌ Python 3.8 or higher is required!")
+        print("[ERROR] Python 3.8 or higher is required.")
         print(f"Current version: {version.major}.{version.minor}.{version.micro}")
         return False
     
-    print(f"✅ Python {version.major}.{version.minor}.{version.micro} - OK")
+    print(f"[OK] Python {version.major}.{version.minor}.{version.micro}")
     return True
 
 def install_requirements():
     """Install required packages."""
-    print("\n📦 Installing required packages...")
+    print("\nInstalling required packages...")
     
     try:
         subprocess.check_call([
             sys.executable, "-m", "pip", "install", "-r", "requirements.txt"
         ])
-        print("✅ Requirements installed successfully!")
+        print("[OK] Requirements installed successfully.")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error installing requirements: {e}")
+        print(f"[ERROR] Could not install requirements: {e}")
         return False
 
 def check_data_files():
     """Check if data files exist."""
-    print("\n📁 Checking data files...")
+    print("\nChecking data files...")
     
     required_files = [
         "data/raw/Basic_Stats.csv",
@@ -63,21 +63,21 @@ def check_data_files():
         if not os.path.exists(file_path):
             missing_files.append(file_path)
         else:
-            print(f"✅ {file_path}")
+            print(f"[OK] Found {file_path}")
     
     if missing_files:
-        print("❌ Missing data files:")
+        print("[ERROR] Missing data files:")
         for file_path in missing_files:
             print(f"   - {file_path}")
         print("\nPlease ensure all CSV files are in the data/raw/ directory.")
         return False
     
-    print("✅ All data files found!")
+    print("[OK] All data files found.")
     return True
 
 def run_initial_setup():
     """Run the initial project setup."""
-    print("\n🚀 Running initial project setup...")
+    print("\nRunning initial project setup...")
     
     try:
         # Run the main script to set up database and preprocess data
@@ -86,31 +86,29 @@ def run_initial_setup():
         ], capture_output=True, text=True)
         
         if result.returncode == 0:
-            print("✅ Project setup completed successfully!")
+            print("[OK] Project setup completed successfully.")
             return True
         else:
-            print("❌ Project setup failed!")
+            print("[ERROR] Project setup failed.")
             print("Error output:")
             print(result.stderr)
             return False
             
     except Exception as e:
-        print(f"❌ Error during setup: {e}")
+        print(f"[ERROR] Unexpected failure during setup: {e}")
         return False
 
 def show_next_steps():
     """Show next steps for the user."""
     print("\n" + "=" * 60)
-    print("🎉 Setup Complete!")
+    print("Setup Complete!")
     print("=" * 60)
     print("\nNext steps:")
-    print("1. 🚀 Launch the app:")
-    print("   python main.py --app")
-    print("\n2. 📊 Check project status:")
+    print("1. Check project status:")
     print("   python main.py --status")
-    print("\n3. 🔄 Re-run setup (if needed):")
+    print("\n2. Re-run setup (if needed):")
     print("   python main.py --workflow --force-reload")
-    print("\n4. 📖 Read the README for more information")
+    print("\n3. Read the README for more information")
     print("\nThe app will be available at: http://localhost:8501")
     print("=" * 60)
 

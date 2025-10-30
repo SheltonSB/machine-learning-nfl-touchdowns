@@ -36,6 +36,14 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     logger.info("Database initialized")
     
+    if settings.TEST_MODE:
+        logger.info("Test mode enabled; skipping ML and RAG initialisation.")
+        ml_pipeline = object()
+        rag_system = object()
+        yield
+        logger.info("Test mode shutdown complete.")
+        return
+    
     # Initialize ML pipeline
     ml_pipeline = MLPipeline()
     await ml_pipeline.initialize()
@@ -118,4 +126,3 @@ if __name__ == "__main__":
         reload=True,
         log_level="info"
     )
-

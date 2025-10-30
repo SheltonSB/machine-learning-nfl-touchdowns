@@ -6,58 +6,11 @@
     <title>🏈 NFL AI/ML Platform - LIVE Production</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="static/landing.css" rel="stylesheet">
     <style>
-        .hero-section {
-            background: linear-gradient(135deg, #2d5a27 0%, #4a7c59 100%);
-            color: white;
-            padding: 4rem 0;
-            position: relative;
-            overflow: hidden;
-        }
-        .feature-card {
-            transition: transform 0.3s ease;
-            height: 100%;
-        }
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-        .chat-container {
-            max-height: 600px;
-            overflow-y: auto;
-            background: #f8f9fa;
-            border-radius: 0.5rem;
-            padding: 1rem;
-        }
-        .message {
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            animation: fadeIn 0.3s ease-in;
-        }
-        .user-message {
-            background-color: #2d5a27;
-            color: white;
-            margin-left: 2rem;
-        }
-        .ai-message {
-            background-color: white;
-            border: 1px solid #dee2e6;
-            margin-right: 2rem;
-        }
-        .confidence-badge {
-            font-size: 0.8rem;
-            padding: 0.25rem 0.5rem;
-        }
-        .reasoning-box {
-            background-color: #e9ecef;
-            border-left: 3px solid #2d5a27;
-            padding: 0.75rem;
-            margin-top: 0.5rem;
-            border-radius: 0.25rem;
-        }
         .production-indicator {
             background: linear-gradient(45deg, #2d5a27, #4a7c59, #6b8e23);
-            color: white;
+            color: #ffffff;
             padding: 0.25rem 0.5rem;
             border-radius: 0.25rem;
             font-size: 0.8rem;
@@ -65,7 +18,7 @@
         }
         .live-indicator {
             background: #dc3545;
-            color: white;
+            color: #ffffff;
             padding: 0.25rem 0.5rem;
             border-radius: 0.25rem;
             font-size: 0.8rem;
@@ -77,147 +30,9 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .typing-indicator {
-            display: none;
-            color: #6c757d;
-            font-style: italic;
-        }
-        .typing-indicator.show {
-            display: block;
-        }
-        .stats-card {
-            background: linear-gradient(135deg, #2d5a27 0%, #4a7c59 100%);
-            color: white;
-        }
-        .data-freshness {
-            font-size: 0.7rem;
-            color: #28a745;
-            font-weight: bold;
-        }
-        
-        /* Football Animations */
-        .football-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-            overflow: hidden;
-        }
-        
-        .football {
-            position: absolute;
-            font-size: 2rem;
-            color: rgba(45, 90, 39, 0.1);
-            animation: float 6s ease-in-out infinite;
-        }
-        
-        .football:nth-child(1) {
-            top: 10%;
-            left: 10%;
-            animation-delay: 0s;
-            animation-duration: 8s;
-        }
-        
-        .football:nth-child(2) {
-            top: 20%;
-            right: 15%;
-            animation-delay: 2s;
-            animation-duration: 10s;
-        }
-        
-        .football:nth-child(3) {
-            top: 60%;
-            left: 5%;
-            animation-delay: 4s;
-            animation-duration: 7s;
-        }
-        
-        .football:nth-child(4) {
-            top: 80%;
-            right: 10%;
-            animation-delay: 1s;
-            animation-duration: 9s;
-        }
-        
-        .football:nth-child(5) {
-            top: 40%;
-            left: 50%;
-            animation-delay: 3s;
-            animation-duration: 11s;
-        }
-        
-        .football:nth-child(6) {
-            top: 70%;
-            right: 30%;
-            animation-delay: 5s;
-            animation-duration: 6s;
-        }
-        
-        .football:nth-child(7) {
-            top: 30%;
-            left: 80%;
-            animation-delay: 2.5s;
-            animation-duration: 8.5s;
-        }
-        
-        .football:nth-child(8) {
-            top: 90%;
-            left: 20%;
-            animation-delay: 4.5s;
-            animation-duration: 7.5s;
-        }
-        
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0px) rotate(0deg);
-                opacity: 0.1;
-            }
-            25% {
-                transform: translateY(-20px) rotate(90deg);
-                opacity: 0.3;
-            }
-            50% {
-                transform: translateY(-40px) rotate(180deg);
-                opacity: 0.2;
-            }
-            75% {
-                transform: translateY(-20px) rotate(270deg);
-                opacity: 0.3;
-            }
-        }
-        
-        .bouncing-football {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            font-size: 3rem;
-            color: #2d5a27;
-            animation: bounce 2s infinite;
-            z-index: 1000;
-            cursor: pointer;
-        }
-        
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
-                transform: translateY(0);
-            }
-            40% {
-                transform: translateY(-30px);
-            }
-            60% {
-                transform: translateY(-15px);
-            }
-        }
     </style>
 </head>
-<body>
+<body style="--hero-gradient-start:#2d5a27; --hero-gradient-end:#4a7c59; --user-message-bg:#2d5a27; --accent-positive:#28a745; --accent-negative:#dc3545; --reasoning-border:#2d5a27; --indicator-gradient:linear-gradient(45deg,#2d5a27,#4a7c59,#6b8e23);">
     <!-- Football Animations Background -->
     <div class="football-animation">
         <div class="football">🏈</div>

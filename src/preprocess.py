@@ -1,5 +1,5 @@
 """
-NFL QB Touchdown Predictor — Database-Driven Preprocessing Script
+NFL QB Touchdown Predictor - Database Driven Preprocessing Script
 
 This script loads data from the SQLite database, creates rolling features,
 and prepares the final dataset for model training.

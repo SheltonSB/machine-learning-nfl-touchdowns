@@ -16,7 +16,6 @@ RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
 MODELS_DIR = PROJECT_ROOT / "models"
 SRC_DIR = PROJECT_ROOT / "src"
-APP_DIR = PROJECT_ROOT / "app"
 
 # Database configuration
 DATABASE_NAME = "nfl_data.db"
@@ -53,14 +52,6 @@ REQUIRED_CSV_FILES = [
     "Game_Logs_Quarterback.csv", 
     "Career_Stats_Passing.csv"
 ]
-
-# Streamlit app configuration
-STREAMLIT_CONFIG = {
-    "page_title": "🏈 NFL QB Touchdown Predictor",
-    "page_icon": "🏈",
-    "layout": "wide",
-    "initial_sidebar_state": "expanded"
-}
 
 # Validation thresholds
 VALIDATION_THRESHOLDS = {
@@ -185,14 +176,6 @@ MODEL_TARGETS = {
     "min_roc_auc": 0.85
 }
 
-# App features configuration
-APP_FEATURES = {
-    "max_recent_games": 10,
-    "default_recent_games": 3,
-    "prediction_history_limit": 50,
-    "sample_data_limit": 10
-}
-
 # Environment variables
 ENV_VARS = {
     "DATABASE_PATH": os.getenv("NFL_DATABASE_PATH", str(DATABASE_PATH)),
@@ -207,8 +190,7 @@ def ensure_directories():
         RAW_DATA_DIR,
         PROCESSED_DATA_DIR,
         MODELS_DIR,
-        SRC_DIR,
-        APP_DIR
+        SRC_DIR
     ]
     
     for directory in directories:

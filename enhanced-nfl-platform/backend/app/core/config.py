@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
     LLM_MODEL: str = "microsoft/DialoGPT-medium"
     
+    # Test / runtime toggles
+    TEST_MODE: bool = False
+
     # AWS Settings (for production)
     AWS_ACCESS_KEY_ID: Optional[str] = None
     AWS_SECRET_ACCESS_KEY: Optional[str] = None

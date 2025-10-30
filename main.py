@@ -7,7 +7,7 @@ This script orchestrates the entire workflow:
 2. Validate data quality
 3. Preprocess data for modeling
 4. Train model (if needed)
-5. Launch the Streamlit app
+5. (Optional) Deploy or serve predictions through external services
 
 Author: Shelton Bumhe
 """
@@ -84,9 +84,9 @@ class NFLProjectOrchestrator:
             all_passed = all(results.values())
             
             if all_passed:
-                logger.info("✅ All validation checks passed!")
+                logger.info("All validation checks passed.")
             else:
-                logger.warning("⚠️ Some validation checks failed. Review the data.")
+                logger.warning("Some validation checks failed. Review the data.")
             
             return all_passed
         except Exception as e:
@@ -104,7 +104,7 @@ class NFLProjectOrchestrator:
         
         try:
             final_dataset = self.preprocessor.process_all()
-            logger.info("✅ Preprocessing completed successfully!")
+            logger.info("Preprocessing completed successfully.")
             return True
         except Exception as e:
             logger.error(f"Error during preprocessing: {e}")
@@ -119,10 +119,10 @@ class NFLProjectOrchestrator:
         """
         model_path = Path("models/qb_td_model.pkl")
         if model_path.exists():
-            logger.info("✅ Model found!")
+            logger.info("Model found.")
             return True
         else:
-            logger.warning("⚠️ Model not found. You may need to train the model.")
+            logger.warning("Model not found. You may need to train the model.")
             return False
     
     def run_complete_workflow(self, force_reload=False, skip_validation=False):
@@ -133,68 +133,34 @@ class NFLProjectOrchestrator:
             force_reload (bool): Whether to force reload data
             skip_validation (bool): Whether to skip validation
         """
-        logger.info("🚀 Starting NFL QB Touchdown Predictor workflow...")
+        logger.info("Starting NFL QB Touchdown Predictor workflow...")
         
         # Step 1: Setup database
         if not self.setup_database(force_reload):
-            logger.error("❌ Database setup failed. Exiting.")
+            logger.error("Database setup failed. Exiting.")
             return False
         
         # Step 2: Validate data (optional)
         if not skip_validation:
             if not self.validate_data():
-                logger.warning("⚠️ Data validation failed, but continuing...")
+                logger.warning("Data validation failed, but continuing...")
         else:
             logger.info("Skipping data validation...")
         
         # Step 3: Preprocess data
         if not self.preprocess_data():
-            logger.error("❌ Preprocessing failed. Exiting.")
+            logger.error("Preprocessing failed. Exiting.")
             return False
         
         # Step 4: Check model
         self.check_model()
         
-        logger.info("✅ Workflow completed successfully!")
+        logger.info("Workflow completed successfully.")
         return True
-    
-    def launch_app(self):
-        """Launch the Streamlit app."""
-        logger.info("🌐 Launching Streamlit app...")
-        
-        app_path = Path("app/app.py")
-        if not app_path.exists():
-            logger.error(f"❌ App file not found: {app_path}")
-            return False
-        
-        try:
-            import subprocess
-            import streamlit
-            
-            # Check if streamlit is available
-            logger.info("Starting Streamlit app...")
-            logger.info("The app will open in your browser automatically.")
-            logger.info("Press Ctrl+C to stop the app.")
-            
-            # Launch the app
-            subprocess.run([
-                sys.executable, "-m", "streamlit", "run", 
-                str(app_path), "--server.port", "8501"
-            ])
-            
-        except ImportError:
-            logger.error("❌ Streamlit not installed. Install with: pip install streamlit")
-            return False
-        except KeyboardInterrupt:
-            logger.info("App stopped by user.")
-            return True
-        except Exception as e:
-            logger.error(f"❌ Error launching app: {e}")
-            return False
     
     def show_status(self):
         """Show the current status of the project."""
-        logger.info("📊 Project Status Report")
+        logger.info("Project status report")
         logger.info("=" * 50)
         
         # Database status
@@ -249,12 +215,6 @@ def main():
     )
     
     parser.add_argument(
-        "--app", 
-        action="store_true",
-        help="Launch the Streamlit app"
-    )
-    
-    parser.add_argument(
         "--workflow", 
         action="store_true",
         help="Run complete workflow (setup + validate + preprocess)"
@@ -299,16 +259,9 @@ def main():
         elif args.workflow:
             orchestrator.run_complete_workflow(args.force_reload, args.skip_validation)
         
-        elif args.app:
-            orchestrator.launch_app()
-        
         else:
-            # Default: run complete workflow and launch app
-            if orchestrator.run_complete_workflow(args.force_reload, args.skip_validation):
-                logger.info("🎉 Ready to launch app!")
-                user_input = input("Press Enter to launch the Streamlit app (or Ctrl+C to exit): ")
-                if user_input == "":
-                    orchestrator.launch_app()
+            # Default: run complete workflow
+            orchestrator.run_complete_workflow(args.force_reload, args.skip_validation)
     
     except KeyboardInterrupt:
         logger.info("Process interrupted by user.")

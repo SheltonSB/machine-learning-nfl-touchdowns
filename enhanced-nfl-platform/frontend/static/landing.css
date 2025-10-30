@@ -1,0 +1,126 @@
+:root {
+  --hero-gradient-start: #1e3c72;
+  --hero-gradient-end: #2a5298;
+  --user-message-bg: #0d6efd;
+  --ai-message-bg: #ffffff;
+  --accent-positive: #28a745;
+  --accent-negative: #dc3545;
+  --reasoning-border: #0d6efd;
+  --indicator-gradient: linear-gradient(45deg, #0d6efd, #6610f2);
+  --text-color: #212529;
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  color: var(--text-color);
+  background-color: #ffffff;
+}
+
+.hero-section {
+  background: linear-gradient(135deg, var(--hero-gradient-start), var(--hero-gradient-end));
+  color: #ffffff;
+  padding: 4rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card {
+  transition: transform 0.3s ease;
+  height: 100%;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+
+.prediction-card {
+  border-left: 4px solid var(--accent-positive);
+}
+
+.no-prediction-card {
+  border-left: 4px solid var(--accent-negative);
+}
+
+.chat-container {
+  max-height: 520px;
+  overflow-y: auto;
+  background: #f8f9fa;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.message {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.user-message {
+  background-color: var(--user-message-bg);
+  color: #ffffff;
+  margin-left: 2rem;
+}
+
+.ai-message {
+  background-color: var(--ai-message-bg);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  margin-right: 2rem;
+}
+
+.confidence-badge {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.reasoning-box {
+  background-color: #e9ecef;
+  border-left: 3px solid var(--reasoning-border);
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.typing-indicator {
+  display: none;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.typing-indicator.show {
+  display: block;
+}
+
+.badge-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--indicator-gradient);
+  color: #ffffff;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent);
+  margin: 2rem 0;
+}
+
+.footer-note {
+  font-size: 0.9rem;
+  color: #6c757d;
+}

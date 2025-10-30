@@ -3,10 +3,11 @@
 NFL AI Platform - Start Script for Render
 """
 import sys
-import os
+from pathlib import Path
 
-# Add the enhanced-nfl-platform directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'enhanced-nfl-platform'))
+CURRENT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = CURRENT_DIR if (CURRENT_DIR / "backend").exists() else CURRENT_DIR.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 # Import and run the working app
 if __name__ == "__main__":

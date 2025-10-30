@@ -438,7 +438,7 @@ class NFLDataValidator:
         total = len(results)
         
         for check, result in results.items():
-            status = "✅ PASS" if result else "❌ FAIL"
+            status = "PASS" if result else "FAIL"
             logger.info(f"{check:30}: {status}")
         
         logger.info("="*60)
@@ -446,9 +446,9 @@ class NFLDataValidator:
         logger.info("="*60)
         
         if passed == total:
-            logger.info("🎉 All validation checks passed! Data is ready for modeling.")
+            logger.info("All validation checks passed. Data is ready for modeling.")
         else:
-            logger.warning("⚠️  Some validation checks failed. Please review the data.")
+            logger.warning("Some validation checks failed. Please review the data.")
 
 def main():
     """Main function to run data validation."""

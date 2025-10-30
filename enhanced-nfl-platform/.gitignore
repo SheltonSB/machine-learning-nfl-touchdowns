@@ -1,0 +1,11 @@
+
+# Build artifacts, caches, and logs
+backend/__pycache__
+backend/*.log
+frontend/*.log
+backend/*.db
+backend/models/*.pkl
+
+# Python cache directories
+__pycache__/
+*.py[cod]
