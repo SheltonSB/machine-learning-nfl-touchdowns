@@ -7,6 +7,7 @@ from typing import List, Optional
 from app.models.database import Prediction
 from app.schemas.prediction import PredictionCreate, PredictionResponse, PredictionRequest
 from app.core.ml_pipeline import MLPipeline
+import anyio
 
 class PredictionService:
     def __init__(self, db: Session, ml_pipeline: Optional[MLPipeline] = None):
@@ -17,6 +18,17 @@ class PredictionService:
         """Make a touchdown prediction"""
         if not self.ml_pipeline:
             raise ValueError("ML pipeline not available")
+        
+        # Validate feature completeness against pipeline requirements
+        required_columns = getattr(self.ml_pipeline, "feature_columns", [])
+        if required_columns:
+            required = set(required_columns)
+            provided = set(prediction_request.features.keys())
+            missing = required - provided
+            if missing:
+                raise ValueError(
+                    f"Missing required feature(s): {', '.join(sorted(missing))}"
+                )
         
         # Use ML pipeline to make prediction
         result = await self.ml_pipeline.predict(
@@ -34,12 +46,17 @@ class PredictionService:
             created_by="api_user"
         )
         
-        db_prediction = Prediction(**prediction_data.dict())
-        self.db.add(db_prediction)
-        self.db.commit()
-        self.db.refresh(db_prediction)
+        db_prediction = Prediction(**prediction_data.model_dump())
         
-        return PredictionResponse.from_orm(db_prediction)
+        def _persist(pred: Prediction) -> Prediction:
+            self.db.add(pred)
+            self.db.commit()
+            self.db.refresh(pred)
+            return pred
+        
+        db_prediction = await anyio.to_thread.run_sync(_persist, db_prediction)
+        
+        return PredictionResponse.model_validate(db_prediction)
 
     async def get_predictions(
         self, 
@@ -53,12 +70,12 @@ class PredictionService:
             query = query.filter(Prediction.player_id == player_id)
         
         predictions = query.order_by(Prediction.created_at.desc()).limit(limit).all()
-        return [PredictionResponse.from_orm(pred) for pred in predictions]
+        return [PredictionResponse.model_validate(pred) for pred in predictions]
 
     async def get_prediction(self, prediction_id: int) -> Optional[PredictionResponse]:
         """Get a specific prediction"""
         prediction = self.db.query(Prediction).filter(Prediction.id == prediction_id).first()
-        return PredictionResponse.from_orm(prediction) if prediction else None
+        return PredictionResponse.model_validate(prediction) if prediction else None
 
     async def get_prediction_accuracy(self, player_id: int) -> Optional[dict]:
         """Get prediction accuracy for a specific player"""
@@ -88,17 +105,16 @@ class PredictionService:
         
         predictions = []
         for player_id in player_ids:
-            # This would typically load player features from database
-            # For now, using placeholder features
-            features = {
-                "passing_yards_roll3": 250.0,
-                "td_passes_roll3": 1.5,
-                "passes_attempted_roll3": 35.0,
-                "age": 28,
-                "experience": 5,
-                "height": 74,
-                "weight": 220
-            }
+            # TODO: Replace with real feature builder that pulls from DB
+            # Build a complete feature vector with sensible defaults
+            features = {col: 0.0 for col in self.ml_pipeline.feature_columns}
+            # Optionally, override a few commonly available fields to avoid all-zeros
+            for k, v in {
+                "age": 28.0,
+                "experience": 5.0,
+            }.items():
+                if k in features:
+                    features[k] = v
             
             prediction_request = PredictionRequest(
                 player_id=player_id,

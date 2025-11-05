@@ -47,7 +47,7 @@ NFL_API_KEY = os.getenv("NFL_API_KEY", "")
 
 # Create FastAPI app
 app = FastAPI(
-    title="🏈 NFL AI/ML Platform - Ultimate Production",
+    title="NFL AI/ML Platform - Ultimate Production",
     description="The most advanced NFL AI platform with fine-tuning, temperature control, and ensemble ML",
     version="5.0.0",
     docs_url="/docs",
@@ -86,10 +86,10 @@ try:
         conn.execute(text("SELECT 1"))
     
     DATABASE_AVAILABLE = True
-    logger.info("✅ MySQL database connected successfully!")
+    logger.info("MySQL database connected successfully")
     
 except Exception as e:
-    logger.error(f"❌ MySQL connection failed: {e}")
+    logger.error(f"MySQL connection failed: {e}")
     DATABASE_AVAILABLE = False
 
 # Initialize Advanced AI Systems
@@ -222,7 +222,7 @@ async def serve_frontend():
         <html>
             <head><title>NFL AI Platform</title></head>
             <body>
-                <h1>🏈 NFL AI Platform - Ultimate Production</h1>
+                <h1>NFL AI Platform - Ultimate Production</h1>
                 <p>API is running! Visit <a href="/docs">/docs</a> for API documentation.</p>
             </body>
         </html>
@@ -577,20 +577,20 @@ async def startup_event():
     """Initialize all systems on startup"""
     global rag_system, ml_pipeline
     
-    logger.info("🚀 Starting NFL AI/ML Platform - Ultimate Production")
+    logger.info("Starting NFL AI/ML Platform - Ultimate Production")
     
     try:
         # Initialize Advanced RAG System
-        logger.info("🧠 Initializing Advanced RAG System...")
+        logger.info("Initializing Advanced RAG System...")
         rag_system = AdvancedRAGSystem(DATABASE_URL)
         await rag_system.initialize()
         
         # Initialize Advanced ML Pipeline
-        logger.info("🤖 Initializing Advanced ML Pipeline...")
+        logger.info("Initializing Advanced ML Pipeline...")
         ml_pipeline = AdvancedMLPipeline(DATABASE_URL)
         await ml_pipeline.initialize()
         
-        logger.info("🎉 Ultimate Production platform ready!")
+        logger.info("Ultimate Production platform ready")
         
     except Exception as e:
         logger.error(f"Error during startup: {e}")

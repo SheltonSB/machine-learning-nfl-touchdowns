@@ -1,23 +1,54 @@
-# 🏈 NFL AI Platform - Complete Deployment Guide
+# Deployment Guide
 
-## 🚀 Quick Start with Docker
+## Quick Start with Docker Compose
 
 ### Prerequisites
-- Docker and Docker Compose installed
-- Git installed
-- Internet connection
+- Docker Desktop (or Docker Engine) with Compose support
+- Git
+- Trained model artifacts in the repository `models/` directory (`qb_td_model.keras`, `feature_scaler.pkl`, `training_metrics.json`). Generate them with:
 
-### 1. Clone and Deploy
+  ```bash
+  python main.py --workflow --train-model --generate-shap
+  ```
+
+### 1. Clone and Prepare
 ```bash
 git clone <your-repo-url>
+cd machine-learning-nfl-touchdowns
+python main.py --workflow --train-model --generate-shap
 cd enhanced-nfl-platform
-./deploy_docker.sh
 ```
 
-### 2. Access the Application
-- **Web App**: http://localhost
-- **API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
+### 2. Verify artifacts & tests
+```bash
+# From repository root
+make backend-test
+make frontend-test
+
+# Optional: regenerate static landing pages
+python enhanced-nfl-platform/frontend/landing/build_landing_pages.py
+```
+
+### 3. Prepare production artifacts
+- Backend artifacts: ensure the following files are present and committed/bundled with deploys:
+  - `models/qb_td_model.keras`
+  - `models/feature_scaler.pkl`
+  - `models/training_metrics.json`
+  - `models/shap_summary.png`
+- Dependency lock: the backend relies on `matplotlib==3.8.2` and `shap==0.44.1` (see `backend/requirements.txt`). If you maintain platform-specific lock files (e.g., Pipenv, Poetry), include these packages there as well.
+- Coverage gate: `make backend-test` enforces ≥80% coverage. The `.coveragerc` in `backend/` omits experimental modules (ML training, RAG orchestration) from coverage calculations; keep those exclusions unless you add tests for them.
+- Frontend unit tests must still pass after any UI changes.
+
+### 4. Launch the stack
+```bash
+docker-compose up --build
+```
+
+### 5. Access the Application
+- Web app: http://localhost:3000
+- API: http://localhost:8000
+- API docs: http://localhost:8000/docs
+- Health check: http://localhost:8000/health
 
 ## 🌐 Cloud Deployment Options
 
@@ -55,10 +86,17 @@ MYSQL_PASSWORD=nfl_password
 MYSQL_DATABASE=nfl_ai
 PORT=8000
 HOST=0.0.0.0
-OPENAI_API_KEY=your_openai_api_key_here
-REDIS_URL=redis://redis:6379
+MODEL_PATH=/app/models
+TENSORFLOW_MODEL_PATH=/app/models/qb_td_model.keras
+TENSORFLOW_SCALER_PATH=/app/models/feature_scaler.pkl
+TENSORFLOW_METRICS_PATH=/app/models/training_metrics.json
+EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+REDIS_URL=redis://redis:6379/0
+OPENAI_API_KEY=<optional-if-RAG-enabled>
 ENVIRONMENT=production
+MODEL_ARTIFACT_MOUNT=/app/models
 ```
+Mount or copy the local `models/` directory into the container path referenced by `MODEL_ARTIFACT_MOUNT`.
 
 ## 🗄️ Database Setup
 
@@ -193,7 +231,7 @@ docker-compose exec -T mysql mysql -u nfl_user -p nfl_ai < backup.sql
 ### Health Checks
 
 - **Backend**: http://localhost:8000/health
-- **Frontend**: http://localhost/
+- **Frontend**: http://localhost:3000/
 - **MySQL**: `docker-compose exec mysql mysqladmin ping`
 - **Redis**: `docker-compose exec redis redis-cli ping`
 

@@ -26,7 +26,7 @@ CHUNK_SIZE = 1000  # Number of rows to process at once when loading CSV files
 ROLLING_WINDOW = 3  # Number of games to include in rolling averages
 
 # Model configuration
-MODEL_FILENAME = "qb_td_model.pkl"
+MODEL_FILENAME = "qb_td_model.keras"
 MODEL_PATH = MODELS_DIR / MODEL_FILENAME
 
 # Feature configuration

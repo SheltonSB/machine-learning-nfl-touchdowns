@@ -63,20 +63,29 @@ class NFLDataLoader:
         # Rename columns to match database schema
         df = df.rename(columns={
             'Player Id': 'player_id',
-            'Height (inches)': 'Height',
-            'Weight (lbs)': 'Weight'
+            'Name': 'name',
+            'Age': 'age',
+            'Height (inches)': 'height',
+            'Weight (lbs)': 'weight',
+            'Experience': 'experience',
+            'Position': 'position'
         })
         
         # Clean up data types
-        df['Age'] = pd.to_numeric(df['Age'], errors='coerce')
-        df['Height'] = pd.to_numeric(df['Height'], errors='coerce')
-        df['Weight'] = pd.to_numeric(df['Weight'], errors='coerce')
+        df['age'] = pd.to_numeric(df['age'], errors='coerce')
+        df['height'] = pd.to_numeric(df['height'], errors='coerce')
+        df['weight'] = pd.to_numeric(df['weight'], errors='coerce')
         
         # Extract numeric experience
-        df['Experience'] = df['Experience'].str.extract(r'(\d+)').astype(float)
+        df['experience'] = (
+            df['experience']
+            .astype(str)
+            .str.extract(r'(\d+)')
+            .astype(float)
+        )
         
         # Clean up position
-        df['Position'] = df['Position'].fillna('Unknown')
+        df['position'] = df['position'].fillna('Unknown')
         
         return df.dropna(subset=['player_id'])
     

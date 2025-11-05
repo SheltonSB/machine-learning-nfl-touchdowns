@@ -94,7 +94,7 @@ else
 fi
 
 # Check Frontend
-if curl -f http://localhost/ > /dev/null 2>&1; then
+if curl -f http://localhost:3000/ > /dev/null 2>&1; then
     print_status "Frontend is healthy"
 else
     print_warning "Frontend health check failed"
@@ -105,29 +105,19 @@ echo ""
 echo "🎉 DOCKER DEPLOYMENT SUCCESSFUL!"
 echo "================================"
 echo ""
-print_status "🌐 Web Application: http://localhost"
+print_status "🌐 Web Application: http://localhost:3000"
 print_status "🔧 Backend API: http://localhost:8000"
 print_status "📊 API Documentation: http://localhost:8000/docs"
 print_status "❤️ Health Check: http://localhost:8000/health"
 print_status "🗄️ MySQL Database: localhost:3306"
 print_status "🔄 Redis Cache: localhost:6379"
 echo ""
-print_info "🚀 FEATURES AVAILABLE:"
-echo "  🤖 Advanced ML with 5+ algorithms"
-echo "  🎯 Predict for ANY player (not just database players)"
-echo "  🧠 Google-style AI text completion"
-echo "  ⚡ Ensemble learning with hyperparameter optimization"
-echo "  🔬 Advanced feature engineering"
-echo "  📊 Real-time feature importance analysis"
-echo "  🎛️ Temperature control for AI creativity"
-echo "  📈 Performance metrics and monitoring"
-echo "  🗄️ MySQL Database with 281,872+ records"
-echo "  🎨 Beautiful responsive interface with animations"
-echo "  🐳 Fully containerized with Docker"
-echo "  ⚡ Nginx load balancing and caching"
-echo "  🔒 Security headers and rate limiting"
+print_info "🚀 Verify endpoints:"
+echo "  Backend health: http://localhost:8000/health"
+echo "  API docs: http://localhost:8000/docs"
+echo "  Frontend: http://localhost:3000"
 echo ""
-print_info "📋 DOCKER COMMANDS:"
+print_info "📋 Docker commands:"
 echo "  View logs: docker-compose logs -f"
 echo "  Stop services: docker-compose down"
 echo "  Restart services: docker-compose restart"
@@ -140,12 +130,12 @@ echo "  Frontend logs: docker-compose logs -f frontend"
 echo "  MySQL logs: docker-compose logs -f mysql"
 echo "  Redis logs: docker-compose logs -f redis"
 echo ""
-print_info "🌐 READY FOR PRODUCTION:"
-echo "  • Configure your domain name"
-echo "  • Set up SSL certificates"
-echo "  • Configure environment variables"
-echo "  • Set up monitoring and logging"
-echo "  • Configure backup strategies"
+# Remove outdated marketing snippet; provide actionable reminder
+print_info "🌐 Ready for production checklist:"
+echo "  • Configure domain + TLS termination"
+echo "  • Provide production database credentials"
+echo "  • Set monitoring/alerting on critical endpoints"
+echo "  • Schedule model refresh cadence"
 echo ""
 
 # 7. Test the application
@@ -202,11 +192,11 @@ fi
 # 8. Open browser (optional)
 if command -v open &> /dev/null; then
     print_info "Opening browser..."
-    open http://localhost
+    open http://localhost:3000
 elif command -v xdg-open &> /dev/null; then
     print_info "Opening browser..."
-    xdg-open http://localhost
+    xdg-open http://localhost:3000
 fi
 
 print_status "NFL AI Platform is now running with Docker!"
-print_info "Visit http://localhost to access the application"
+print_info "Visit http://localhost:3000 to access the application"

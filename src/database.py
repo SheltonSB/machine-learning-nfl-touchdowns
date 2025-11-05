@@ -10,7 +10,7 @@ Author: Shelton Bumhe
 import logging
 import os
 import sqlite3
-from typing import Dict
+from typing import Dict, Optional
 
 import pandas as pd
 

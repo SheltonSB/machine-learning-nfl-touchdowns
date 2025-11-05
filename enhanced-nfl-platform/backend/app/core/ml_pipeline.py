@@ -102,10 +102,22 @@ class MLPipeline:
         self.models = {}
         self.scalers = {}
         self.feature_columns = [
-            'passing_yards_roll3', 'td_passes_roll3', 'passes_attempted_roll3',
-            'age', 'experience', 'height', 'weight', 'completion_percentage',
-            'yards_per_attempt', 'passer_rating', 'td_rate_roll3',
-            'completion_rate_roll3', 'interceptions_roll3', 'rushing_yards_roll3'
+            "age",
+            "height",
+            "weight",
+            "experience",
+            "passing_yards",
+            "td_passes",
+            "interceptions",
+            "passes_attempted",
+            "completion_percentage",
+            "yards_per_attempt",
+            "passer_rating",
+            "passing_yards_roll3",
+            "td_passes_roll3",
+            "passes_attempted_roll3",
+            "td_rate_roll3",
+            "completion_rate_roll3",
         ]
         self.target_column = 'threw_td'
         
@@ -137,15 +149,15 @@ class MLPipeline:
                 eval_metric='logloss'
             )
         else:
-            logger.warning('XGBoost library not installed; xgboost model disabled.')
+            logger.info('XGBoost library not installed; xgboost model disabled.')
             self.models['xgboost'] = None
 
         # TensorFlow Model
         if tf is not None:
-            self.models['tensorflow'] = self._build_tensorflow_model()
-            self.scalers['tensorflow'] = StandardScaler()
+            self.models['tensorflow'] = None
+            self.scalers['tensorflow'] = None
         else:
-            logger.warning('TensorFlow library not installed; tensorflow model disabled.')
+            logger.warning('TensorFlow library not installed; tensorflow model disabled. TensorFlow support is required for the primary model.')
             self.models['tensorflow'] = None
             self.scalers['tensorflow'] = None
 
@@ -159,7 +171,7 @@ class MLPipeline:
             )
             self.scalers['pytorch'] = StandardScaler()
         else:
-            logger.warning('PyTorch library not installed; pytorch model disabled.')
+            logger.info('PyTorch library not installed; pytorch model disabled.')
             self.models['pytorch'] = None
             self.scalers['pytorch'] = None
 
@@ -190,19 +202,62 @@ class MLPipeline:
     
     async def _load_or_train_models(self):
         """Load existing models or train new ones"""
-        model_paths = {
-            'xgboost': settings.XGBOOST_MODEL_PATH,
-            'tensorflow': settings.TENSORFLOW_MODEL_PATH,
-            'pytorch': settings.PYTORCH_MODEL_PATH
+        artifact_paths = {
+            "xgboost": {
+                "model": getattr(settings, "XGBOOST_MODEL_PATH", None),
+                "scaler": None,
+            },
+            "tensorflow": {
+                "model": settings.TENSORFLOW_MODEL_PATH,
+                "scaler": getattr(settings, "TENSORFLOW_SCALER_PATH", None),
+            },
+            "pytorch": {
+                "model": getattr(settings, "PYTORCH_MODEL_PATH", None),
+                "scaler": None,
+            },
         }
-        
-        for model_name, model_path in model_paths.items():
-            if Path(model_path).exists():
-                logger.info(f"Loading {model_name} model from {model_path}")
-                await self._load_model(model_name, model_path)
+
+        optional_models = {"xgboost", "pytorch"}
+
+        # Load persisted scalers if present
+        for name, paths in artifact_paths.items():
+            scaler_path_str = paths.get("scaler")
+            if not scaler_path_str:
+                continue
+
+            scaler_path = Path(scaler_path_str)
+            if scaler_path.exists():
+                try:
+                    self.scalers[name] = joblib.load(scaler_path)
+                    logger.info("Loaded scaler for %s from %s", name, scaler_path)
+                except Exception as exc:
+                    logger.warning("Failed to load scaler for %s: %s", name, exc)
             else:
-                logger.info(f"Training {model_name} model...")
-                await self._train_model(model_name)
+                if name == "tensorflow":
+                    logger.warning("Scaler for %s not found at %s", name, scaler_path)
+                else:
+                    logger.debug("Optional scaler for %s not found at %s; skipping", name, scaler_path)
+
+        for model_name, paths in artifact_paths.items():
+            model_path_str = paths.get("model")
+            if not model_path_str:
+                if model_name in optional_models:
+                    logger.debug("Optional model %s not configured; skipping", model_name)
+                    continue
+                else:
+                    raise RuntimeError(f"Model path for required model {model_name} is not configured")
+
+            model_path = Path(model_path_str)
+            if model_path.exists():
+                logger.info("Loading %s model from %s", model_name, model_path)
+                await self._load_model(model_name, str(model_path))
+            else:
+                if model_name in optional_models:
+                    logger.info("Optional model %s not found at %s; skipping load", model_name, model_path)
+                    self.models[model_name] = None
+                else:
+                    logger.info("Training %s model...", model_name)
+                    await self._train_model(model_name)
     
     async def _load_model(self, model_name: str, model_path: str):
         """Load a trained model"""
@@ -213,6 +268,15 @@ class MLPipeline:
                 if tf is None:
                     raise RuntimeError('TensorFlow is not installed; cannot load tensorflow model.')
                 self.models[model_name] = tf.keras.models.load_model(model_path)
+                if self.scalers.get('tensorflow') is None:
+                    scaler_path_str = getattr(settings, 'TENSORFLOW_SCALER_PATH', None)
+                    if scaler_path_str:
+                        scaler_path = Path(scaler_path_str)
+                        try:
+                            self.scalers['tensorflow'] = joblib.load(scaler_path)
+                            logger.info("Loaded TensorFlow scaler from %s", scaler_path)
+                        except Exception as exc:
+                            logger.warning("Failed to load TensorFlow scaler from %s: %s", scaler_path, exc)
             elif model_name == 'pytorch':
                 if torch is None:
                     raise RuntimeError('PyTorch is not installed; cannot load pytorch model.')
@@ -254,7 +318,7 @@ class MLPipeline:
             if torch is None:
                 raise RuntimeError('PyTorch is not installed; cannot train pytorch model.')
             # PyTorch training would go here
-            pass
+            raise RuntimeError('PyTorch training routine not implemented; provide trained model and scaler.')
     
     async def predict(self, features: Dict[str, float], model_name: str = 'ensemble') -> Dict[str, Any]:
         """Make prediction using specified model"""
@@ -277,18 +341,27 @@ class MLPipeline:
         if model is None:
             raise ValueError(f"Model {model_name} not found")
         
+        def _ensure_fitted_scaler(scaler: Optional[StandardScaler], name: str) -> None:
+            if scaler is None:
+                raise ValueError(f"Scaler for {name} is not available. Train the model first.")
+            # StandardScaler is considered fitted if it has mean_
+            if not hasattr(scaler, 'mean_'):
+                raise ValueError(f"Scaler for {name} is not fitted. Train the model to fit and persist scalers.")
+        
         if model_name == 'xgboost':
             probability = model.predict_proba(features)[0][1]
             prediction = model.predict(features)[0]
             
         elif model_name == 'tensorflow':
             # Scale features for TensorFlow
+            _ensure_fitted_scaler(self.scalers.get('tensorflow'), 'tensorflow')
             features_scaled = self.scalers['tensorflow'].transform(features)
             probability = float(model.predict(features_scaled)[0][0])
             prediction = int(probability > 0.5)
             
         elif model_name == 'pytorch':
             # Scale features for PyTorch
+            _ensure_fitted_scaler(self.scalers.get('pytorch'), 'pytorch')
             features_scaled = self.scalers['pytorch'].transform(features)
             features_tensor = torch.FloatTensor(features_scaled).unsqueeze(0)
             
@@ -305,16 +378,16 @@ class MLPipeline:
     
     async def _ensemble_predict(self, features: np.ndarray) -> Dict[str, Any]:
         """Make ensemble prediction using all models"""
-        predictions = []
+        predictions = {}
         probabilities = []
         
         for model_name in ['xgboost', 'tensorflow', 'pytorch']:
             if self.models[model_name] is not None:
                 result = await self._single_model_predict(features, model_name)
-                predictions.append(result['prediction'])
+                predictions[model_name] = result['prediction']
                 probabilities.append(result['probability'])
         
-        if not predictions:
+        if not probabilities:
             raise ValueError("No models available for ensemble prediction")
         
         # Weighted average of probabilities
@@ -326,11 +399,7 @@ class MLPipeline:
             'probability': ensemble_probability,
             'model_used': 'ensemble',
             'confidence': abs(ensemble_probability - 0.5) * 2,
-            'individual_predictions': {
-                'xgboost': predictions[0] if len(predictions) > 0 else None,
-                'tensorflow': predictions[1] if len(predictions) > 1 else None,
-                'pytorch': predictions[2] if len(predictions) > 2 else None
-            }
+            'individual_predictions': predictions
         }
     
     async def get_model_performance(self) -> Dict[str, Any]:
@@ -362,6 +431,10 @@ class MLPipeline:
             self.models[model_name].fit(X_train, y_train)
             
         elif model_name == 'tensorflow':
+            if self.models.get(model_name) is None:
+                self.models[model_name] = self._build_tensorflow_model()
+            if self.scalers.get('tensorflow') is None:
+                self.scalers['tensorflow'] = StandardScaler()
             X_train_scaled = self.scalers['tensorflow'].fit_transform(X_train)
             X_test_scaled = self.scalers['tensorflow'].transform(X_test)
             
@@ -375,7 +448,10 @@ class MLPipeline:
             
         elif model_name == 'pytorch':
             # PyTorch training logic would go here
-            pass
+            # Fit scaler so inference is valid even if training logic is minimal
+            if self.scalers.get('pytorch') is None:
+                self.scalers['pytorch'] = StandardScaler()
+            _ = self.scalers['pytorch'].fit(X_train)
         
         # Save retrained model
         await self._save_model(model_name)
@@ -401,6 +477,15 @@ class MLPipeline:
                 torch.save(self.models[model_name].state_dict(), model_path)
             
             logger.info(f"Successfully saved {model_name} model to {model_path}")
+            # Persist scaler if present
+            scaler = self.scalers.get(model_name)
+            if scaler is not None:
+                if model_name == 'tensorflow':
+                    scaler_path = getattr(settings, 'TENSORFLOW_SCALER_PATH', f"{model_path}.scaler")
+                else:
+                    scaler_path = f"{model_path}.scaler"
+                joblib.dump(scaler, scaler_path)
+                logger.info("Saved scaler for %s to %s", model_name, scaler_path)
         except Exception as e:
             logger.error(f"Error saving {model_name} model: {e}")
             raise

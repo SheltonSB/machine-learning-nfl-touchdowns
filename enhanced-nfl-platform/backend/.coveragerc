@@ -1,0 +1,10 @@
+[run]
+omit =
+    app/core/ml_pipeline.py
+    app/core/rag_system.py
+    app/api/v1/endpoints/rag.py
+    app/services/player_service.py
+    app/api/v1/endpoints/players.py
+
+
+

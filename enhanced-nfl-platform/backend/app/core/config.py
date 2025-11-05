@@ -2,12 +2,13 @@
 Configuration settings for the NFL AI/ML Platform
 """
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List, Optional
 import os
 
 class Settings(BaseSettings):
     """Application settings"""
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
     
     # API Settings
     API_V1_STR: str = "/api/v1"
@@ -29,7 +30,9 @@ class Settings(BaseSettings):
     # ML Model Settings
     MODEL_PATH: str = "models/"
     XGBOOST_MODEL_PATH: str = "models/xgboost_model.pkl"
-    TENSORFLOW_MODEL_PATH: str = "models/tensorflow_model.h5"
+    TENSORFLOW_MODEL_PATH: str = "models/qb_td_model.keras"
+    TENSORFLOW_SCALER_PATH: str = "models/feature_scaler.pkl"
+    TENSORFLOW_METRICS_PATH: str = "models/training_metrics.json"
     PYTORCH_MODEL_PATH: str = "models/pytorch_model.pth"
     
     # RAG System Settings
@@ -50,9 +53,5 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-
 # Create settings instance
 settings = Settings()

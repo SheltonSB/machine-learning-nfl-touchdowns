@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
-    title="🏈 NFL AI/ML Platform with Llama",
+    title="NFL AI/ML Platform with Llama",
     description="Advanced NFL touchdown prediction platform with Llama-powered AI chat",
     version="2.0.0"
 )
@@ -176,17 +176,17 @@ async def startup_event():
         logger.info("Initializing Llama RAG system...")
         success = await llama_rag.initialize()
         if success:
-            logger.info("✅ Llama RAG system initialized successfully!")
+            logger.info("Llama RAG system initialized successfully")
         else:
-            logger.warning("⚠️ Llama RAG system initialization failed. Using fallback.")
+            logger.warning("Llama RAG system initialization failed. Using fallback.")
     else:
-        logger.warning("⚠️ Llama dependencies not available. Using fallback responses.")
+        logger.warning("Llama dependencies not available. Using fallback responses.")
 
 # Routes
 @app.get("/")
 async def root():
     return {
-        "message": "🏈 NFL AI/ML Platform with Llama",
+        "message": "NFL AI/ML Platform with Llama",
         "version": "2.0.0",
         "status": "running",
         "features": {

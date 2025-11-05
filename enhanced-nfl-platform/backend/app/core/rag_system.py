@@ -10,6 +10,8 @@ from typing import List, Dict, Any, Optional
 import logging
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
+from app.core.config import settings
+from app.core.database import get_db
 
 SKIP_RAG_IMPORTS = os.getenv("SKIP_RAG_IMPORTS") == "1"
 
@@ -276,7 +278,8 @@ class RAGSystem:
                 vector = {
                     "id": f"doc_{i}",
                     "values": embedding.tolist(),
-                    "metadata": doc["metadata"]
+                    # Ensure content is stored with metadata for retrieval consistency
+                    "metadata": {**doc["metadata"], "content": doc["content"]}
                 }
                 vectors.append(vector)
             
@@ -340,6 +343,7 @@ class RAGSystem:
             relevant_docs = []
             for match in results['matches']:
                 doc = {
+                    # We explicitly store content within metadata during upsert
                     "content": match['metadata'].get('content', ''),
                     "metadata": match['metadata'],
                     "score": match['score']
@@ -411,13 +415,14 @@ class RAGSystem:
             embedding = self.embedding_model.encode([content])[0]
             
             # Store in vector database
+            doc_id = f"doc_{len(self.embeddings_cache)}"
             if self.vector_db is not None:
-                doc_id = f"doc_{len(self.embeddings_cache)}"
                 self.vector_db.upsert(
                     vectors=[{
                         "id": doc_id,
                         "values": embedding.tolist(),
-                        "metadata": metadata
+                        # Store content alongside metadata for retrieval
+                        "metadata": {**metadata, "content": content}
                     }]
                 )
             

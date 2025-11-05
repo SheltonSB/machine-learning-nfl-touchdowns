@@ -15,7 +15,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 PAGE_DEFINITIONS: List[dict] = [
     {
         "filename": "enhanced.html",
-        "title": "🏈 NFL AI/ML Platform with Llama",
+        "title": "e NFL AI/ML Platform with Llama",
         "nav": {
             "brand": "NFL AI/ML Platform with Llama",
             "badge": "LLAMA POWERED",
@@ -104,7 +104,7 @@ PAGE_DEFINITIONS: List[dict] = [
     },
     {
         "filename": "production.html",
-        "title": "🏈 NFL AI/ML Platform - Live Production",
+        "title": "NFL AI/ML Platform - Live Production",
         "nav": {
             "brand": "NFL AI/ML Platform — Production",
             "badge": "LIVE",
@@ -183,7 +183,7 @@ PAGE_DEFINITIONS: List[dict] = [
     },
     {
         "filename": "comprehensive.html",
-        "title": "🏈 NFL AI/ML Platform - Comprehensive",
+        "title": "NFL AI/ML Platform - Comprehensive",
         "nav": {
             "brand": "NFL AI/ML Platform",
             "badge": "KNOWLEDGE GRAPH",
@@ -262,7 +262,7 @@ PAGE_DEFINITIONS: List[dict] = [
     },
     {
         "filename": "simple.html",
-        "title": "🏈 NFL AI/ML Platform",
+        "title": "NFL AI/ML Platform",
         "nav": {
             "brand": "NFL AI/ML Platform",
             "badge": None,
@@ -341,7 +341,7 @@ PAGE_DEFINITIONS: List[dict] = [
     },
     {
         "filename": "ultimate.html",
-        "title": "🏈 NFL AI Platform - Ultimate Production",
+        "title": "NFL AI Platform - Ultimate Production",
         "nav": {
             "brand": "NFL AI Platform",
             "badge": "ULTIMATE",

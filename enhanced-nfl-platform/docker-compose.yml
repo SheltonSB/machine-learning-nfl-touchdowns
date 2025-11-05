@@ -23,7 +23,8 @@ services:
 
   # Backend API
   backend:
-    build: .
+    build:
+      context: .
     container_name: nfl_ai_backend
     restart: unless-stopped
     environment:
@@ -33,16 +34,25 @@ services:
       - MYSQL_PASSWORD=nfl_password
       - MYSQL_DATABASE=nfl_ai
       - PORT=8000
+      - EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+      - MODEL_PATH=/app/models
+      - TENSORFLOW_MODEL_PATH=/app/models/qb_td_model.keras
+      - TENSORFLOW_SCALER_PATH=/app/models/feature_scaler.pkl
+      - TENSORFLOW_METRICS_PATH=/app/models/training_metrics.json
+      - REDIS_URL=redis://redis:6379/0
+      - TEST_MODE=0
     ports:
       - "8000:8000"
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - nfl_network
     volumes:
-      - ./backend/models:/app/backend/models
-      - ./data:/app/data
+      - ../models:/app/models:ro
+      - ../data:/app/data:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -51,15 +61,17 @@ services:
 
   # Frontend (Nginx)
   frontend:
-    image: nginx:alpine
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_BASE_URL: http://localhost:8000
     container_name: nfl_ai_frontend
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./frontend:/usr/share/nginx/html
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_BASE_URL=http://localhost:8000
     depends_on:
       - backend
     networks:

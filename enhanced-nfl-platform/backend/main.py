@@ -9,6 +9,9 @@ from fastapi.security import HTTPBearer
 from contextlib import asynccontextmanager
 import uvicorn
 import logging
+import os
+from pathlib import Path
+from typing import Optional
 
 from app.core.config import settings
 from app.core.database import engine, Base
@@ -20,15 +23,86 @@ from app.core.rag_system import RAGSystem
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Global variables for ML models and RAG system
-ml_pipeline = None
-rag_system = None
+REQUIRED_ENVS = [
+    "DATABASE_URL",
+    "EMBEDDING_MODEL",
+]
+
+MODEL_ARTIFACT_ENVS = {
+    "xgboost": {"model": "XGBOOST_MODEL_PATH", "scaler": None},
+    "tensorflow": {
+        "model": "TENSORFLOW_MODEL_PATH",
+        "scaler": "TENSORFLOW_SCALER_PATH",
+    },
+    "pytorch": {"model": "PYTORCH_MODEL_PATH", "scaler": None},
+}
+
+def _resolve_setting(name: str) -> Optional[str]:
+    """Resolve an environment variable or fall back to settings."""
+
+    value = os.getenv(name)
+    if value:
+        return value
+    return getattr(settings, name, None)
+
+
+def _check_required_env() -> None:
+    missing = [key for key in REQUIRED_ENVS if not _resolve_setting(key)]
+    if missing:
+        raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
+
+
+def _check_model_artifacts() -> None:
+    critical_missing: list[str] = []
+    optional_warnings: list[str] = []
+
+    for name, env_keys in MODEL_ARTIFACT_ENVS.items():
+        model_env = env_keys["model"]
+        model_path_str = _resolve_setting(model_env)
+        if not model_path_str:
+            if name == "tensorflow":
+                critical_missing.append(f"{model_env} (not configured)")
+            else:
+                optional_warnings.append(f"{name} model path not configured; skipping")
+            continue
+
+        model_path = Path(model_path_str)
+        if not model_path.exists():
+            if name == "tensorflow":
+                critical_missing.append(str(model_path))
+            else:
+                optional_warnings.append(f"{name} model missing at {model_path}")
+
+        scaler_env = env_keys.get("scaler")
+        if not scaler_env:
+            continue
+
+        scaler_path_str = _resolve_setting(scaler_env)
+        if not scaler_path_str:
+            if name == "tensorflow":
+                critical_missing.append(f"{scaler_env} (not configured)")
+            else:
+                optional_warnings.append(f"{name} scaler not configured")
+            continue
+
+        scaler_path = Path(scaler_path_str)
+        if not scaler_path.exists():
+            if name == "tensorflow":
+                critical_missing.append(str(scaler_path))
+            else:
+                optional_warnings.append(f"{name} scaler missing at {scaler_path}")
+
+    for message in optional_warnings:
+        logger.info(message)
+
+    if critical_missing and not settings.TEST_MODE:
+        raise RuntimeError(
+            "Missing TensorFlow model artifacts: " + ", ".join(critical_missing)
+        )
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager"""
-    global ml_pipeline, rag_system
-    
     # Startup
     logger.info("Starting NFL AI/ML Platform...")
     
@@ -36,23 +110,30 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     logger.info("Database initialized")
     
+    # Deployment guards
+    try:
+        _check_required_env()
+        _check_model_artifacts()
+    except Exception as e:
+        logger.error(f"Startup guard failed: {e}")
+        raise
+
     if settings.TEST_MODE:
         logger.info("Test mode enabled; skipping ML and RAG initialisation.")
-        ml_pipeline = object()
-        rag_system = object()
+        app.state.ml_pipeline = object()
+        app.state.rag_system = object()
         yield
         logger.info("Test mode shutdown complete.")
         return
     
     # Initialize ML pipeline
-    ml_pipeline = MLPipeline()
-    set_ml_pipeline(ml_pipeline)
-    await ml_pipeline.initialize()
+    app.state.ml_pipeline = MLPipeline()
+    await app.state.ml_pipeline.initialize()
     logger.info("ML Pipeline initialized")
     
     # Initialize RAG system
-    rag_system = RAGSystem()
-    await rag_system.initialize()
+    app.state.rag_system = RAGSystem()
+    await app.state.rag_system.initialize()
     logger.info("RAG System initialized")
     
     yield
@@ -86,8 +167,8 @@ async def health_check():
     """Health check endpoint"""
     return {
         "status": "healthy",
-        "ml_pipeline": "ready" if ml_pipeline else "loading",
-        "rag_system": "ready" if rag_system else "loading"
+        "ml_pipeline": "ready" if getattr(app.state, "ml_pipeline", None) else "loading",
+        "rag_system": "ready" if getattr(app.state, "rag_system", None) else "loading"
     }
 
 # Root endpoint
@@ -103,21 +184,23 @@ async def root():
 
 # Dependency to get ML pipeline
 def get_ml_pipeline() -> MLPipeline:
-    if ml_pipeline is None:
+    mlp = getattr(app.state, "ml_pipeline", None)
+    if mlp is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="ML Pipeline not initialized"
         )
-    return ml_pipeline
+    return mlp
 
 # Dependency to get RAG system
 def get_rag_system() -> RAGSystem:
-    if rag_system is None:
+    rag = getattr(app.state, "rag_system", None)
+    if rag is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="RAG System not initialized"
         )
-    return rag_system
+    return rag
 
 if __name__ == "__main__":
     uvicorn.run(

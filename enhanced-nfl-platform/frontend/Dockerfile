@@ -3,11 +3,19 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Pass API base URL at build time for create-react-app
+ARG REACT_APP_API_BASE_URL
+ENV REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL}
+
 # Copy package files
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+# Install dependencies needed for build
+RUN npm ci
 
 # Copy source code
 COPY . .

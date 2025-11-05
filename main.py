@@ -25,6 +25,8 @@ from database import NFLDatabase
 from data_loader import NFLDataLoader
 from data_validator import NFLDataValidator
 from preprocess import NFLPreprocessor
+from train_model import main as train_model_main
+from explain_shap import main as shap_main
 
 # Set up logging
 logging.basicConfig(
@@ -111,27 +113,97 @@ class NFLProjectOrchestrator:
             return False
     
     def check_model(self):
-        """
-        Check if the model exists.
-        
-        Returns:
-            bool: True if model exists, False otherwise
-        """
-        model_path = Path("models/qb_td_model.pkl")
-        if model_path.exists():
-            logger.info("Model found.")
+        """Check for the presence of a trained model artifact."""
+
+        tf_model_path = Path("models/qb_td_model.keras")
+        legacy_model_path = Path("models/qb_td_model.pkl")
+
+        if tf_model_path.exists():
+            logger.info("TensorFlow model found at %s", tf_model_path)
             return True
-        else:
-            logger.warning("Model not found. You may need to train the model.")
-            return False
+
+        if legacy_model_path.exists():
+            logger.warning(
+                "Found legacy XGBoost model at %s. Consider retraining with TensorFlow (python main.py --train-model).",
+                legacy_model_path,
+            )
+            return True
+
+        logger.warning(
+            "Model artifact not found. Run 'python main.py --train-model' after preprocessing to train the TensorFlow model."
+        )
+        return False
     
-    def run_complete_workflow(self, force_reload=False, skip_validation=False):
+    def train_model(self, force: bool = False, generate_shap: bool = False) -> bool:
+        """Train the TensorFlow model and optionally generate SHAP summary."""
+
+        dataset_path = Path("data/processed/final_dataset.csv")
+        model_path = Path("models/qb_td_model.keras")
+
+        if not dataset_path.exists():
+            logger.error(
+                "Processed dataset not found at %s. Run preprocessing before training.",
+                dataset_path,
+            )
+            return False
+
+        if model_path.exists() and not force:
+            logger.info(
+                "Model already exists at %s. Use --force-train to retrain.",
+                model_path,
+            )
+            if generate_shap:
+                return self.generate_shap_summary()
+            return True
+
+        try:
+            logger.info("Starting TensorFlow model training...")
+            exit_code = train_model_main()
+            if exit_code != os.EX_OK:
+                logger.error("Training script exited with status %s", exit_code)
+                return False
+            logger.info("Model training completed successfully.")
+
+            if generate_shap:
+                return self.generate_shap_summary()
+
+            return True
+        except Exception as exc:
+            logger.error("Error during model training: %s", exc)
+            return False
+
+    def generate_shap_summary(self) -> bool:
+        """Generate SHAP summary visualization for the trained model."""
+
+        try:
+            logger.info("Generating SHAP summary plot...")
+            exit_code = shap_main()
+            if exit_code != os.EX_OK and exit_code != 0:
+                logger.error("SHAP script exited with status %s", exit_code)
+                return False
+            logger.info("SHAP summary generated successfully.")
+            return True
+        except Exception as exc:
+            logger.error("Error generating SHAP summary: %s", exc)
+            return False
+
+    def run_complete_workflow(
+        self,
+        force_reload: bool = False,
+        skip_validation: bool = False,
+        train: bool = False,
+        generate_shap: bool = False,
+        force_train: bool = False,
+    ):
         """
         Run the complete workflow.
         
         Args:
             force_reload (bool): Whether to force reload data
             skip_validation (bool): Whether to skip validation
+            train (bool): Whether to train the TensorFlow model after preprocessing
+            generate_shap (bool): Whether to generate SHAP summary
+            force_train (bool): Whether to retrain even if a model exists
         """
         logger.info("Starting NFL QB Touchdown Predictor workflow...")
         
@@ -152,8 +224,22 @@ class NFLProjectOrchestrator:
             logger.error("Preprocessing failed. Exiting.")
             return False
         
-        # Step 4: Check model
-        self.check_model()
+        train_needed = train or force_train
+
+        if train_needed:
+            if not self.train_model(force=force_train, generate_shap=generate_shap):
+                logger.error("Model training failed. Exiting.")
+                return False
+            self.check_model()
+        else:
+            model_ready = self.check_model()
+            if generate_shap and model_ready:
+                if not self.generate_shap_summary():
+                    logger.error("Failed to generate SHAP summary. Exiting.")
+                    return False
+            elif generate_shap:
+                logger.error("Cannot generate SHAP summary because model is missing.")
+                return False
         
         logger.info("Workflow completed successfully.")
         return True
@@ -238,6 +324,24 @@ def main():
         help="Skip data validation in workflow"
     )
     
+    parser.add_argument(
+        "--train-model",
+        action="store_true",
+        help="Train the TensorFlow model using the processed dataset"
+    )
+    
+    parser.add_argument(
+        "--force-train",
+        action="store_true",
+        help="Retrain the TensorFlow model even if an artifact already exists"
+    )
+    
+    parser.add_argument(
+        "--generate-shap",
+        action="store_true",
+        help="Generate SHAP summary visualization after training"
+    )
+    
     args = parser.parse_args()
     
     # Create orchestrator
@@ -247,6 +351,14 @@ def main():
         if args.status:
             orchestrator.show_status()
         
+        elif args.train_model and not args.workflow:
+            orchestrator.train_model(
+                force=args.force_train, generate_shap=args.generate_shap
+            )
+
+        elif args.generate_shap and not args.workflow:
+            orchestrator.generate_shap_summary()
+
         elif args.setup:
             orchestrator.setup_database(args.force_reload)
         
@@ -257,11 +369,23 @@ def main():
             orchestrator.preprocess_data()
         
         elif args.workflow:
-            orchestrator.run_complete_workflow(args.force_reload, args.skip_validation)
+            orchestrator.run_complete_workflow(
+                args.force_reload,
+                args.skip_validation,
+                train=args.train_model or args.force_train,
+                generate_shap=args.generate_shap,
+                force_train=args.force_train,
+            )
         
         else:
             # Default: run complete workflow
-            orchestrator.run_complete_workflow(args.force_reload, args.skip_validation)
+            orchestrator.run_complete_workflow(
+                args.force_reload,
+                args.skip_validation,
+                train=args.train_model or args.force_train,
+                generate_shap=args.generate_shap,
+                force_train=args.force_train,
+            )
     
     except KeyboardInterrupt:
         logger.info("Process interrupted by user.")

@@ -9,8 +9,8 @@ Author: Shelton Bumhe
                                                    
 import pandas as pd
 import numpy as np
-import os
 import logging
+from pathlib import Path
 from database import NFLDatabase
 
 # Set up logging
@@ -28,10 +28,12 @@ class NFLPreprocessor:
             db (NFLDatabase): Database instance
         """
         self.db = db or NFLDatabase()
-        self.processed_data_path = '../data/processed/'
+        self.processed_data_path = (
+            Path(__file__).resolve().parent.parent / "data" / "processed"
+        )
         
         # Create processed data directory if it doesn't exist
-        os.makedirs(self.processed_data_path, exist_ok=True)
+        self.processed_data_path.mkdir(parents=True, exist_ok=True)
     
     def load_data_from_db(self) -> tuple:
         """
@@ -215,18 +217,15 @@ class NFLPreprocessor:
         for feature in rolling_features:
             if feature in df_sorted.columns:
                 # Create rolling average (excluding current game)
-                df_sorted[f'{feature}_roll3'] = (
-                    df_sorted.groupby('player_id')[feature]
-                    .shift(1)  # Don't include current game
-                    .rolling(window=3, min_periods=1)
-                    .mean()
+                shifted = df_sorted.groupby('player_id')[feature].shift(1)
+                df_sorted[f'{feature}_roll3'] = shifted.groupby(df_sorted['player_id']).transform(
+                    lambda s: s.rolling(window=3, min_periods=1).mean()
                 )
                 
                 # Create rolling average (including current game)
                 df_sorted[f'{feature}_roll3_current'] = (
                     df_sorted.groupby('player_id')[feature]
-                    .rolling(window=3, min_periods=1)
-                    .mean()
+                    .transform(lambda s: s.rolling(window=3, min_periods=1).mean())
                 )
         
         # Create additional features
@@ -237,16 +236,12 @@ class NFLPreprocessor:
         # Create rolling rates
         df_sorted['td_rate_roll3'] = (
             df_sorted.groupby('player_id')['td_rate']
-            .shift(1)
-            .rolling(window=3, min_periods=1)
-            .mean()
+            .transform(lambda s: s.shift(1).rolling(window=3, min_periods=1).mean())
         )
         
         df_sorted['completion_rate_roll3'] = (
             df_sorted.groupby('player_id')['completion_rate']
-            .shift(1)
-            .rolling(window=3, min_periods=1)
-            .mean()
+            .transform(lambda s: s.shift(1).rolling(window=3, min_periods=1).mean())
         )
         
         logger.info("Rolling features created successfully")
@@ -304,7 +299,7 @@ class NFLPreprocessor:
         Args:
             df (DataFrame): Final dataset
         """
-        output_path = os.path.join(self.processed_data_path, 'final_dataset.csv')
+        output_path = self.processed_data_path / 'final_dataset.csv'
         df.to_csv(output_path, index=False)
         logger.info(f"Final dataset saved to {output_path}")
         

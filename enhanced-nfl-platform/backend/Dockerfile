@@ -27,6 +27,9 @@ RUN useradd --create-home --shell /bin/bash app \
     && chown -R app:app /app
 USER app
 
+# Switch to the application source directory
+WORKDIR /app/backend
+
 # Expose port
 EXPOSE 8000
 

@@ -34,7 +34,9 @@ machine-learning-nfl-touchdowns/
 |   |-- train_model.py    # Model training
 |   `-- explain_shap.py   # Model explainability
 |-- models/
-|   `-- qb_td_model.pkl   # Trained model file
+|   |-- qb_td_model.keras       # TensorFlow SavedModel artifact
+|   |-- feature_scaler.pkl      # StandardScaler used during training
+|   `-- training_metrics.json   # Cross-validation & evaluation metrics
 |-- notebooks/
 |   `-- eda.ipynb         # Exploratory data analysis
 |-- main.py               # Main orchestration script
@@ -50,7 +52,7 @@ machine-learning-nfl-touchdowns/
 |-----------|------------|---------|
 | Database | SQLite | Data storage and management |
 | Data Processing | pandas, numpy | Data manipulation and analysis |
-| Machine Learning | scikit-learn, xgboost | Model training and prediction |
+| Machine Learning | scikit-learn, TensorFlow (Keras) | Model training and prediction |
 | API & Orchestration | FastAPI, Uvicorn | Optional service layer |
 | Validation | Custom validation framework | Data quality assurance |
 | Orchestration | Python scripts | Workflow automation |
@@ -68,12 +70,30 @@ pip install -r requirements.txt
 ### Run the Complete Workflow
 
 ```bash
-python main.py
+python main.py --workflow --train-model
 ```
 
-This command loads data into the database, validates data quality, preprocesses features, and executes the modeling workflow.
+This command loads data into the database, validates data quality, preprocesses features, and trains the TensorFlow touchdown model. Append `--generate-shap` to export a SHAP summary plot.
 
 Run reproducible tasks with `make`: `make backend-test`, `make frontend-test`, `make seed`, and `make docker-up`.
+
+### Deployment Checklist
+
+1. Refresh data assets
+   - `python main.py --workflow --train-model --generate-shap`
+   - Confirm artifacts exist in `models/qb_td_model.keras`, `models/feature_scaler.pkl`, and `models/training_metrics.json`.
+2. Run automated tests
+   - `make backend-test`
+   - `make frontend-test`
+3. Provision environment variables (see `enhanced-nfl-platform/backend/app/core/config.py` for defaults).
+   - Set `DATABASE_URL`, `MODEL_PATH` (default `/app/models`), `EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2`, and secrets in your deployment target.
+4. Launch the stack with Docker Compose
+   - `cd enhanced-nfl-platform`
+   - `docker-compose up --build`
+5. Verify services
+   - API health: `http://localhost:8000/health`
+   - Frontend: `http://localhost:3000`
+   - Review logs: `docker-compose logs -f`
 
 ### Useful Commands
 
@@ -86,6 +106,15 @@ python main.py --validate
 
 # Preprocess data only
 python main.py --preprocess
+
+# Train or retrain the TensorFlow model (requires processed data)
+python main.py --train-model
+
+# Force retraining even if a model already exists
+python main.py --train-model --force-train
+
+# Generate a SHAP summary (requires trained model and processed data)
+python main.py --generate-shap
 
 # Launch the app only
 python main.py --app
@@ -126,6 +155,8 @@ Key relationships:
 | F1 Score | 85% |
 | ROC-AUC | 91% |
 
+Run `python main.py --train-model` to refresh metrics; the detailed cross-validation and test results are persisted in `models/training_metrics.json` after each training session.
+
 ---
 
 ## Advanced Usage
@@ -147,6 +178,17 @@ from src.data_validator import NFLDataValidator
 validator = NFLDataValidator()
 results = validator.validate_all_data()
 ```
+
+### Model Explainability
+
+```bash
+# Generate a SHAP beeswarm plot after training the TensorFlow model
+python src/explain_shap.py
+```
+
+The script loads the SavedModel (`models/qb_td_model.keras`), applies the stored scaler, and
+writes a summary plot to `models/shap_summary.png` highlighting the strongest drivers of a
+touchdown prediction.
 
 ### Database Queries
 

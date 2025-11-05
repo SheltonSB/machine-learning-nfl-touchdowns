@@ -1,2 +1,14 @@
 __pycache__/
 *.pyc
+.DS_Store
+.venv/
+models/
+*.db
+nfl_data.db
+*.keras
+enhanced-nfl-platform/backend/.coverage
+enhanced-nfl-platform/backend/.pytest_cache/
+enhanced-nfl-platform/backend/coverage.xml
+enhanced-nfl-platform/backend/htmlcov/
+enhanced-nfl-platform/frontend/node_modules/
+enhanced-nfl-platform/frontend/build/
