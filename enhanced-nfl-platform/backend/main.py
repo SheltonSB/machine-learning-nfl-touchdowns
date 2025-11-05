@@ -11,13 +11,67 @@ import uvicorn
 import logging
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
+import random
 
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.api.v1.api import api_router
 from app.core.ml_pipeline import MLPipeline
 from app.core.rag_system import RAGSystem
+
+
+class StubMLPipeline:
+    """Lightweight pipeline used when TEST_MODE=true."""
+
+    feature_columns = [
+        "age",
+        "experience",
+        "games_played",
+        "targets",
+        "touchdowns",
+    ]
+
+    async def initialize(self) -> None:  # parity with real pipeline
+        return None
+
+    async def predict(self, features: dict[str, Any], model_name: Optional[str] = None) -> dict[str, Any]:
+        age = float(features.get("age", 0) or 0)
+        experience = float(features.get("experience", 0) or 0)
+        targets = float(features.get("targets", 0) or 0)
+        touchdowns = float(features.get("touchdowns", 0) or 0)
+
+        signal = (targets * 0.02) + (touchdowns * 0.1) + (experience * 0.05)
+        base_confidence = 0.45 + min(0.4, signal)
+        confidence = round(min(0.95, max(0.35, base_confidence + random.uniform(-0.05, 0.05))), 2)
+        prediction = confidence >= 0.55
+
+        return {
+            "prediction": prediction,
+            "confidence": confidence,
+            "model_used": model_name or "stub-ensemble",
+        }
+
+    async def get_model_performance(self) -> dict[str, dict[str, float]]:
+        return {
+            "ensemble": {"accuracy": 0.91, "f1_score": 0.89},
+            "xgboost": {"accuracy": 0.88, "f1_score": 0.86},
+            "tensorflow": {"accuracy": 0.9, "f1_score": 0.87},
+        }
+
+
+class StubRAGSystem:
+    """Minimal RAG system replacement for demo/test mode."""
+
+    async def initialize(self) -> None:
+        return None
+
+    async def query(self, question: str) -> dict[str, Any]:
+        return {
+            "answer": "Stub response – RAG is disabled in test mode.",
+            "sources": [],
+            "question": question,
+        }
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -119,9 +173,13 @@ async def lifespan(app: FastAPI):
         raise
 
     if settings.TEST_MODE:
-        logger.info("Test mode enabled; skipping ML and RAG initialisation.")
-        app.state.ml_pipeline = object()
-        app.state.rag_system = object()
+        logger.info("Test mode enabled; using stub ML pipeline and RAG components.")
+        stub_pipeline = StubMLPipeline()
+        await stub_pipeline.initialize()
+        stub_rag = StubRAGSystem()
+        await stub_rag.initialize()
+        app.state.ml_pipeline = stub_pipeline
+        app.state.rag_system = stub_rag
         yield
         logger.info("Test mode shutdown complete.")
         return
