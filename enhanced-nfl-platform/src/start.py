@@ -3,6 +3,7 @@
 NFL AI Platform - Start Script for Render
 """
 import sys
+import os
 from pathlib import Path
 
 CURRENT_DIR = Path(__file__).resolve().parent

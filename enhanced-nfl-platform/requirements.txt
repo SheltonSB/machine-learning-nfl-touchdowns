@@ -1,0 +1,6 @@
+# Minimal requirements for Vercel deployment
+# Using working_app which has minimal dependencies
+fastapi==0.104.1
+pydantic==2.5.0
+python-multipart==0.0.6
+

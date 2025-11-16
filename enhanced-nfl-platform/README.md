@@ -50,6 +50,7 @@ enhanced-nfl-platform/
 ├── requirements.txt         # Top-level Python dependencies
 ├── start.py                 # Launcher for consolidated services
 ├── DEPLOYMENT_GUIDE.md      # Comprehensive deployment walkthrough
+├── AWS_RDS_SETUP.md         # AWS RDS setup and configuration guide
 ├── deploy_*.sh              # Convenience scripts for target environments
 ├── render.yaml, heroku.yml, railway.json, etc.
 └── ...                      # Additional configuration (nginx.conf, Procfile, env templates)
@@ -75,6 +76,7 @@ Backends running in managed environments (Render, Railway, Heroku, etc.) should 
 | Target | Manifest / Script | Components | Required env vars (example) |
 |--------|-------------------|------------|------------------------------|
 | Docker Compose | `docker-compose.yml` | Backend API, React frontend, MySQL, Redis | `DATABASE_URL`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`, `REDIS_URL`, `OPENAI_API_KEY` |
+| AWS RDS | See [AWS_RDS_SETUP.md](AWS_RDS_SETUP.md) | Backend API with AWS RDS (PostgreSQL/MySQL) | `DATABASE_URL` or `DB_*` settings, `DB_USE_SSL=true`, `RDS_ENDPOINT` |
 | Render | `render.yaml`, `src/start.py` | Backend API | `DATABASE_URL`, `REDIS_URL`, `OPENAI_API_KEY`, `ALLOWED_HOSTS` |
 | Railway | `railway.json`, `railway-deploy.md` | Backend API + managed Postgres/Redis | `DATABASE_URL`, `REDIS_URL`, `OPENAI_API_KEY`, `SECRET_KEY` |
 | Heroku | `heroku.yml`, `Procfile`, `heroku-deploy.md` | Backend API | `DATABASE_URL`, `REDIS_URL`, `SECRET_KEY`, `OPENAI_API_KEY` |
@@ -132,10 +134,38 @@ sequenceDiagram
 
 **Key environment variables**
 
-- `DATABASE_URL`: Override to point at Postgres/MySQL in production.
+- `DATABASE_URL`: Override to point at Postgres/MySQL in production. Supports AWS RDS (see [AWS RDS Setup Guide](AWS_RDS_SETUP.md)).
 - `REDIS_URL`: Configure cache/queue endpoint.
 - `OPENAI_API_KEY`, `VECTOR_DB_API_KEY`: Required for full RAG capabilities.
 - `TEST_MODE`: Set to `true` inside CI to bypass heavyweight model initialisation.
+
+**AWS RDS Support**
+
+The platform supports AWS RDS for both PostgreSQL and MySQL databases. This provides a managed database solution with automatic backups, high availability, and scaling capabilities.
+
+- **Quick Setup**: Configure `DATABASE_URL` or use individual `DB_*` settings in your `.env` file
+- **SSL/TLS**: Automatic SSL/TLS encryption for RDS connections
+- **Connection Pooling**: Optimized connection pooling for production workloads
+- **Full Documentation**: See [AWS_RDS_SETUP.md](AWS_RDS_SETUP.md) for detailed setup instructions
+
+Example AWS RDS configuration:
+```bash
+# Option 1: Full DATABASE_URL
+DATABASE_URL=postgresql://user:password@your-rds-endpoint.region.rds.amazonaws.com:5432/nfl_platform
+
+# Option 2: Individual settings
+DB_HOST=your-rds-endpoint.region.rds.amazonaws.com
+DB_USER=your_username
+DB_PASSWORD=your_password
+DB_NAME=nfl_platform
+DB_ENGINE=postgresql
+DB_USE_SSL=true
+```
+
+Test your RDS connection:
+```bash
+python backend/test_rds_connection.py
+```
 
 **Failure modes to watch**
 
