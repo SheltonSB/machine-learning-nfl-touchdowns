@@ -13,17 +13,25 @@ import asyncio
 from datetime import datetime
 import logging
 
+# Configure logging FIRST (before any code that uses logger)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Import the Llama RAG system
+LLAMA_AVAILABLE = False
+llama_rag = None
 try:
     from llama_rag_system import llama_rag
     LLAMA_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     LLAMA_AVAILABLE = False
-    print("Llama RAG system not available. Using fallback responses.")
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+    llama_rag = None
+    logger.warning(f"Llama RAG system not available: {e}. Using fallback responses.")
+except Exception as e:
+    # Handle any other import-time errors (e.g., missing dependencies at module level)
+    LLAMA_AVAILABLE = False
+    llama_rag = None
+    logger.warning(f"Failed to import Llama RAG system: {e}. Using fallback responses.")
 
 # Create FastAPI app
 app = FastAPI(
@@ -172,13 +180,22 @@ async def startup_event():
     """Initialize the Llama RAG system on startup"""
     logger.info("Starting NFL AI/ML Platform with Llama...")
     
-    if LLAMA_AVAILABLE:
-        logger.info("Initializing Llama RAG system...")
-        success = await llama_rag.initialize()
-        if success:
-            logger.info("Llama RAG system initialized successfully")
-        else:
-            logger.warning("Llama RAG system initialization failed. Using fallback.")
+    if LLAMA_AVAILABLE and llama_rag is not None:
+        try:
+            logger.info("Initializing Llama RAG system...")
+            # Use asyncio.wait_for to prevent hanging during initialization
+            success = await asyncio.wait_for(
+                llama_rag.initialize(), 
+                timeout=10.0  # 10 second timeout for Vercel cold starts
+            )
+            if success:
+                logger.info("Llama RAG system initialized successfully")
+            else:
+                logger.warning("Llama RAG system initialization failed. Using fallback.")
+        except asyncio.TimeoutError:
+            logger.error("Llama RAG initialization timed out. Using fallback.")
+        except Exception as e:
+            logger.error(f"Error initializing Llama RAG system: {e}. Using fallback.")
     else:
         logger.warning("Llama dependencies not available. Using fallback responses.")
 
@@ -206,7 +223,14 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    rag_status = "initialized" if LLAMA_AVAILABLE and llama_rag.initialized else "fallback"
+    # Safe access with multiple checks
+    rag_status = "fallback"
+    if LLAMA_AVAILABLE and llama_rag is not None:
+        try:
+            rag_status = "initialized" if getattr(llama_rag, 'initialized', False) else "fallback"
+        except Exception as e:
+            logger.warning(f"Error checking llama_rag status: {e}")
+            rag_status = "fallback"
     
     return {
         "status": "healthy",
@@ -303,7 +327,7 @@ async def get_predictions(skip: int = 0, limit: int = 100):
 async def query_rag(query: RAGQuery):
     """Answer questions using enhanced Llama RAG system"""
     
-    if LLAMA_AVAILABLE and llama_rag.initialized:
+    if LLAMA_AVAILABLE and llama_rag is not None and getattr(llama_rag, 'initialized', False):
         try:
             # Use Llama RAG system
             result = await llama_rag.query(query.question)
@@ -366,7 +390,7 @@ async def get_analytics_overview():
         "accuracy": 0.89,  # Enhanced accuracy
         "active_models": 4,
         "total_games": 1000,
-        "llama_rag_status": "active" if LLAMA_AVAILABLE and llama_rag.initialized else "fallback"
+        "llama_rag_status": "active" if (LLAMA_AVAILABLE and llama_rag is not None and getattr(llama_rag, 'initialized', False)) else "fallback"
     }
 
 @app.get("/api/v1/analytics/players")
@@ -393,8 +417,12 @@ async def get_player_analytics():
 @app.get("/api/v1/stats")
 async def get_system_stats():
     """Get system statistics including Llama RAG status"""
-    if LLAMA_AVAILABLE and llama_rag.initialized:
-        rag_stats = await llama_rag.get_stats()
+    if LLAMA_AVAILABLE and llama_rag is not None and getattr(llama_rag, 'initialized', False):
+        try:
+            rag_stats = await llama_rag.get_stats()
+        except Exception as e:
+            logger.error(f"Error getting RAG stats: {e}")
+            rag_stats = {"status": "error", "error": str(e)}
     else:
         rag_stats = {"status": "fallback"}
     

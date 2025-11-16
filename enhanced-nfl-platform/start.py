@@ -41,31 +41,51 @@ logger.info(f"Backend directory exists: {BACKEND_DIR.exists()}")
 logger.info(f"Python path: {sys.path[:5]}")  # Show first 5 entries
 
 # Import the FastAPI app
-# Using working_app as it's the simplest and most compatible for serverless
-try:
-    logger.info("Attempting to import from backend.working_app...")
-    from backend.working_app import app
-    logger.info("Successfully imported app from backend.working_app")
-except ImportError as e:
-    logger.warning(f"Import from backend.working_app failed: {e}")
-    # Fallback: try different import strategies
+# Try enhanced_app first, then fallback to working_app
+# You can control which app to use by setting VERCEL_APP_NAME env var
+app_name = os.environ.get("VERCEL_APP_NAME", "enhanced_app")  # Default to enhanced_app
+app = None
+import_errors = []
+
+# Try importing the requested app first
+if app_name == "enhanced_app":
     try:
-        logger.info("Trying alternative import path...")
-        # Try importing as a module
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "working_app", 
-            BACKEND_DIR / "working_app.py"
-        )
-        if spec and spec.loader:
-            working_app = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(working_app)
-            app = working_app.app
-            logger.info("Successfully imported app using importlib")
-        else:
-            raise ImportError("Could not create module spec")
-    except Exception as e2:
-        logger.error(f"Alternative import also failed: {e2}")
+        logger.info("Attempting to import from backend.enhanced_app...")
+        from backend.enhanced_app import app
+        logger.info("Successfully imported app from backend.enhanced_app")
+    except Exception as e:
+        import_errors.append(f"backend.enhanced_app: {e}")
+        logger.warning(f"Import from backend.enhanced_app failed: {e}, trying fallback...")
+        app_name = "working_app"  # Fallback to working_app
+
+# Fallback to working_app if enhanced_app failed or was requested
+if app is None:
+    try:
+        logger.info(f"Attempting to import from backend.working_app...")
+        from backend.working_app import app
+        logger.info("Successfully imported app from backend.working_app")
+    except ImportError as e:
+        import_errors.append(f"backend.working_app: {e}")
+        logger.warning(f"Import from backend.working_app failed: {e}")
+        # Fallback: try different import strategies
+        try:
+            logger.info("Trying alternative import path...")
+            # Try importing as a module
+            import importlib.util
+            spec = importlib.util.spec_from_file_location(
+                "working_app", 
+                BACKEND_DIR / "working_app.py"
+            )
+            if spec and spec.loader:
+                working_app = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(working_app)
+                app = working_app.app
+                logger.info("Successfully imported app using importlib")
+            else:
+                raise ImportError("Could not create module spec")
+        except Exception as e2:
+            import_errors.append(f"importlib fallback: {e2}")
+            logger.error(f"Alternative import also failed: {e2}")
         # Last resort: create a minimal app with error message
         # Try to import FastAPI, but handle if it's not installed (local dev without deps)
         try:
@@ -92,8 +112,8 @@ except ImportError as e:
                     "message": "NFL AI Platform",
                     "status": "error",
                     "error": "Could not import main app",
-                    "import_error": str(e),
-                    "alternative_error": str(e2) if 'e2' in locals() else None,
+                    "import_errors": import_errors,
+                    "attempted_apps": ["enhanced_app", "working_app"],
                     "python_path": sys.path[:5],
                     "backend_dir": str(BACKEND_DIR),
                     "backend_exists": BACKEND_DIR.exists(),

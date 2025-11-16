@@ -1,6 +1,18 @@
 # Minimal requirements for Vercel deployment
-# Using working_app which has minimal dependencies
+# This keeps the package size small and cold starts fast
+# 
+# enhanced_app.py will gracefully fall back if llama_rag dependencies are missing
+# To use full llama features, add requirements-llama.txt dependencies,
+# but note this may exceed Vercel's package size limits (250MB uncompressed)
+#
+# Core dependencies (always required):
 fastapi==0.104.1
 pydantic==2.5.0
 python-multipart==0.0.6
+
+# Optional: Add if you need llama_rag functionality (not recommended for Vercel)
+# torch==2.2.2  # Very large, may exceed Vercel limits
+# transformers==4.36.0  # Very large, may exceed Vercel limits
+# sentence-transformers==2.7.0
+# chromadb
 
