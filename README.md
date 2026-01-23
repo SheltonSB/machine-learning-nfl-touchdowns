@@ -24,7 +24,7 @@ Predict whether an NFL quarterback will throw a touchdown pass in a game using p
 ```
 machine-learning-nfl-touchdowns/
 |-- data/
-|   |-- raw/              # Original CSV files
+|   |-- raw/              # Original CSV file
 |   `-- processed/        # Cleaned and engineered datasets
 |-- src/
 |   |-- database.py       # Database management
