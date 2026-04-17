@@ -151,7 +151,7 @@ class NFLDataLoader:
             'Passer Rating': 'passer_rating'
         })
         
-        # Add binary TD target
+        # Add binary TD tar
         qb_stats['threw_td'] = (qb_stats['td_passes'] > 0).astype(int)
         
         # Save to database
